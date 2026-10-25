@@ -27,7 +27,7 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL EKRANni YANGILASH
+// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL EKRANNI YANGILASH
 async function saveCloudData() {
     try {
         const payload = {
@@ -84,7 +84,7 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA (Login holatini barqaror tekshirish)
+// SAHIFA YUKLANGANDA (Login muammosini oldini olish)
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCloudData();
 
@@ -154,7 +154,6 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
-        // Login ma'lumotini muddat cheklovisiz saqlaymiz
         localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
 
         startAppSession();
@@ -659,8 +658,8 @@ if (sendAiBtn) {
 
 // QIDIRUV VA FILTRLAR
 const searchInput = document.getElementById('search-input');
-const filterYear = document.getElementById('filter-academic-year');
-const filterCategory = document.getElementById('filter-category');
+let filterYear = document.getElementById('filter-academic-year');
+let filterCategory = document.getElementById('filter-category');
 
 if (searchInput) searchInput.addEventListener('input', renderDocuments);
 if (filterYear) filterYear.addEventListener('change', renderDocuments);

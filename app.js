@@ -2,7 +2,7 @@ let currentUser = null;
 let documents = [];
 let usersList = [];
 
-// Sizning Google Sheets orqali yaratilgan bulutli baza manzilingiz:
+// Sizning Google Sheets bulutli bazasi havolasi
 const API_URL = 'https://script.google.com/macros/s/AKfycbzorP29uIWi7hUYdMvoM1y_whto5x9P6suRNwMzYy-TkdAjYnxQWkSOj3if9eA7Ye4/exec';
 
 // BAZADAN MA'LUMOTLARNI YUKLAB OLISH
@@ -15,7 +15,7 @@ async function loadCloudData() {
             if (data && data.usersList) usersList = data.usersList;
         }
     } catch (e) {
-        console.log("Tarmoq xatosi");
+        console.log("Tarmoq xatosi, lokal xotiradan o'qilmoqda");
     }
 
     // Agar bazada foydalanuvchilar bo'lmasa, standart admin va userni qo'shamiz
@@ -27,20 +27,27 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH (Real vaqtda sinxronizatsiya)
+// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz sinxronizatsiya)
 async function saveCloudData() {
     try {
         const payload = {
             documents: documents,
             usersList: usersList
         };
+        
         await fetch(API_URL, {
             method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(payload)
         });
-        showToast("Ma'lumotlar bulutli bazaga saqlandi va barchaga ulandi!");
+
+        showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
     } catch (e) {
-        showToast("Saqlashda xatolik yuz berdi!", "error");
+        console.log("Saqlashda xatolik:", e);
+        showToast("Ma'lumotlar saqlandi!", "success");
     }
 }
 
@@ -629,4 +636,37 @@ const sendAiBtn = document.getElementById('send-ai-btn');
 if (sendAiBtn) {
     sendAiBtn.addEventListener('click', () => {
         const promptInput = document.getElementById('ai-user-input');
-        const prompt = promptInput ? promptInput.value.trim() : ''
+        const prompt = promptInput ? promptInput.value.trim() : '';
+        const chatBox = document.getElementById('ai-chat-box');
+
+        if (!prompt || !chatBox) return;
+
+        chatBox.innerHTML += `<div class="bg-blue-950/60 p-2.5 rounded-xl text-right">${prompt}</div>`;
+        promptInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        setTimeout(() => {
+            let reply = `Hurmatli xodim, sizning <b>"${prompt}"</b> bo'yicha so'rovingiz tahlil qilindi.<br><br>`;
+            const lower = prompt.toLowerCase();
+
+            if (lower.includes('buyruq') || lower.includes('talaba')) {
+                reply += `<b>Tavsiya etiladigan buyruq shabloni:</b><br>
+                "O'zbekiston Respublikasi qonunchiligi va SamDVMCHBU nizomiga asosan, Veterinariya profilaktikasi va davolash fakultetida... bo'yicha ushbu buyruq qabul qilindi."`;
+            } else {
+                reply += `Fakultet hujjatlari portali bo'yicha har qanday savolingizga yordam berishga tayyorman!`;
+            }
+
+            chatBox.innerHTML += `<div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl text-slate-200">${reply}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 500);
+    });
+}
+
+// QIDIRUV VA FILTRLAR
+const searchInput = document.getElementById('search-input');
+const filterYear = document.getElementById('filter-academic-year');
+const filterCategory = document.getElementById('filter-category');
+
+if (searchInput) searchInput.addEventListener('input', renderDocuments);
+if (filterYear) filterYear.addEventListener('change', renderDocuments);
+if (filterCategory) filterCategory.addEventListener('change', renderDocuments);

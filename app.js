@@ -27,7 +27,7 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz va kafolatlangan usul)
+// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL EKRANni YANGILASH
 async function saveCloudData() {
     try {
         const payload = {
@@ -37,14 +37,11 @@ async function saveCloudData() {
         
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            },
             body: JSON.stringify(payload)
         });
 
-        // Ekranni yangilaymiz
+        // Serverdan eng so'nggi ma'lumotni qayta tortib olamiz
+        await loadCloudData();
         renderDocuments();
         renderUsers();
         updateDashboardStats();
@@ -87,25 +84,27 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA
+// SAHIFA YUKLANGANDA (Login holatini barqaror tekshirish)
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCloudData();
 
     const savedUser = localStorage.getItem('faculty_gs_current_user');
-    const loginTime = localStorage.getItem('faculty_gs_login_time');
-    const now = new Date().getTime();
-
-    if (savedUser && loginTime && (now - loginTime < 24 * 60 * 60 * 1000)) {
+    
+    if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
-            startAppSession();
-            return;
+            const validUser = usersList.find(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
+            if (validUser) {
+                currentUser = validUser;
+                startAppSession();
+                return;
+            }
         } catch (e) {
-            localStorage.removeItem('faculty_gs_current_user');
-            localStorage.removeItem('faculty_gs_login_time');
+            console.log("Session parse xatosi");
         }
     }
     
+    localStorage.removeItem('faculty_gs_current_user');
     const loginScreen = document.getElementById('login-screen');
     if (loginScreen) loginScreen.classList.remove('hidden');
 });
@@ -155,8 +154,8 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
+        // Login ma'lumotini muddat cheklovisiz saqlaymiz
         localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
-        localStorage.setItem('faculty_gs_login_time', new Date().getTime());
 
         startAppSession();
         showToast(`Xush kelibsiz, ${currentUser.fullname}!`);
@@ -207,7 +206,6 @@ const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('faculty_gs_current_user');
-        localStorage.removeItem('faculty_gs_login_time');
         location.reload();
     });
 }

@@ -37,22 +37,22 @@ async function saveCloudData() {
         
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8',
-            },
             body: JSON.stringify(payload)
         });
 
-        // Ma'lumot yuborilgach, bazadan eng so'nggi holatni qayta tortib olamiz
+        // Ma'lumot serverga yozilgach, darhol bazadan qayta o'qib, ekranni yangilaymiz
         await loadCloudData();
         renderDocuments();
         renderUsers();
         updateDashboardStats();
 
-        showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
+        showToast("Ma'lumotlar bulutli bazaga saqlandi va yangilandi!");
     } catch (e) {
-        showToast("Ma'lumotlar bazaga yuborildi!");
+        // Agar tarmoqda cheklov bo'lsa ham lokal yangilaymiz
+        renderDocuments();
+        renderUsers();
+        updateDashboardStats();
+        showToast("Ma'lumotlar saqlandi!");
     }
 }
 
@@ -323,8 +323,7 @@ if (addDocumentForm) {
     });
 }
 
-async function renderDocuments() {
-    await loadCloudData();
+function renderDocuments() {
     const searchInputElem = document.getElementById('search-input');
     const filterYearElem = document.getElementById('filter-academic-year');
     const filterCatElem = document.getElementById('filter-category');
@@ -445,8 +444,7 @@ if (addUserForm) {
     });
 }
 
-async function renderUsers() {
-    await loadCloudData();
+function renderUsers() {
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';

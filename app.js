@@ -2,10 +2,10 @@ let currentUser = null;
 let documents = [];
 let usersList = [];
 
-// Bepul va barqaror bepul API bazasi (To'g'ridan-to'g'ri sinxronizatsiya uchun)
-const API_URL = 'https://api.npoint.io/696ee4503bd0e85fb7c8';
+// Sizning Google Sheets orqali yaratilgan bulutli baza manzilingiz:
+const API_URL = 'https://script.google.com/macros/s/AKfycbzorP29uIWi7hUYdMvoM1y_whto5x9P6suRNwMzYy-TkdAjYnxQWkSOj3if9eA7Ye4/exec';
 
-// MA'LUMOTLARNI YUKLAB OLISH
+// BAZADAN MA'LUMOTLARNI YUKLAB OLISH
 async function loadCloudData() {
     try {
         const response = await fetch(API_URL);
@@ -15,7 +15,7 @@ async function loadCloudData() {
             if (data && data.usersList) usersList = data.usersList;
         }
     } catch (e) {
-        console.log("Tarmoq xatosi, lokal xotiradan o'qilmoqda");
+        console.log("Tarmoq xatosi");
     }
 
     // Agar bazada foydalanuvchilar bo'lmasa, standart admin va userni qo'shamiz
@@ -27,31 +27,20 @@ async function loadCloudData() {
     }
 }
 
-// MA'LUMOTLARNI BULUTGA SAQLASH (Xavfsiz va xatosiz)
+// BAZAGA MA'LUMOTLARNI SAQLASH (Real vaqtda sinxronizatsiya)
 async function saveCloudData() {
     try {
         const payload = {
             documents: documents,
             usersList: usersList
         };
-        const response = await fetch(API_URL, {
-            method: 'PUT', // npoint.io uchun PUT yoki POST ishlatiladi
-            headers: {
-                'Content-Type': 'application/json'
-            },
+        await fetch(API_URL, {
+            method: 'POST',
             body: JSON.stringify(payload)
         });
-        if (!response.ok) {
-            // Agar PUT o'tmasa, POST orqali urinib ko'ramiz
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        }
-        showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
+        showToast("Ma'lumotlar bulutli bazaga saqlandi va barchaga ulandi!");
     } catch (e) {
-        showToast("Saqlashda tarmoq xatosi yuz berdi!", "error");
+        showToast("Saqlashda xatolik yuz berdi!", "error");
     }
 }
 
@@ -88,8 +77,8 @@ function updateDashboardStats() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCloudData();
 
-    const savedUser = localStorage.getItem('faculty_cloud_current_user_v4');
-    const loginTime = localStorage.getItem('faculty_cloud_login_time_v4');
+    const savedUser = localStorage.getItem('faculty_gs_current_user');
+    const loginTime = localStorage.getItem('faculty_gs_login_time');
     const now = new Date().getTime();
 
     if (savedUser && loginTime && (now - loginTime < 24 * 60 * 60 * 1000)) {
@@ -98,8 +87,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             startAppSession();
             return;
         } catch (e) {
-            localStorage.removeItem('faculty_cloud_current_user_v4');
-            localStorage.removeItem('faculty_cloud_login_time_v4');
+            localStorage.removeItem('faculty_gs_current_user');
+            localStorage.removeItem('faculty_gs_login_time');
         }
     }
     
@@ -134,7 +123,7 @@ const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await loadCloudData(); // Kirishdan oldin bulutdan eng yangisini tortamiz
+        await loadCloudData();
 
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value.trim();
@@ -152,8 +141,8 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
-        localStorage.setItem('faculty_cloud_current_user_v4', JSON.stringify(currentUser));
-        localStorage.setItem('faculty_cloud_login_time_v4', new Date().getTime());
+        localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('faculty_gs_login_time', new Date().getTime());
 
         startAppSession();
         showToast(`Xush kelibsiz, ${currentUser.fullname}!`);
@@ -203,8 +192,8 @@ function updateHeaderUserUI() {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('faculty_cloud_current_user_v4');
-        localStorage.removeItem('faculty_cloud_login_time_v4');
+        localStorage.removeItem('faculty_gs_current_user');
+        localStorage.removeItem('faculty_gs_login_time');
         location.reload();
     });
 }
@@ -258,8 +247,8 @@ if (myProfileForm) {
 
         currentUser.originalUsername = currentUser.username;
 
-        await saveCloudData(); // Bulutga yuboramiz
-        localStorage.setItem('faculty_cloud_current_user_v4', JSON.stringify(currentUser));
+        await saveCloudData();
+        localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
         
         updateHeaderUserUI();
         renderUsers();
@@ -312,7 +301,7 @@ if (addDocumentForm) {
             showToast("Yangi hujjat saqlandi!");
         }
 
-        await saveCloudData(); // Bulutli bazaga yuboramiz
+        await saveCloudData();
 
         e.target.reset();
         document.getElementById('edit-doc-id').value = '';
@@ -640,37 +629,4 @@ const sendAiBtn = document.getElementById('send-ai-btn');
 if (sendAiBtn) {
     sendAiBtn.addEventListener('click', () => {
         const promptInput = document.getElementById('ai-user-input');
-        const prompt = promptInput ? promptInput.value.trim() : '';
-        const chatBox = document.getElementById('ai-chat-box');
-
-        if (!prompt || !chatBox) return;
-
-        chatBox.innerHTML += `<div class="bg-blue-950/60 p-2.5 rounded-xl text-right">${prompt}</div>`;
-        promptInput.value = '';
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        setTimeout(() => {
-            let reply = `Hurmatli xodim, sizning <b>"${prompt}"</b> bo'yicha so'rovingiz tahlil qilindi.<br><br>`;
-            const lower = prompt.toLowerCase();
-
-            if (lower.includes('buyruq') || lower.includes('talaba')) {
-                reply += `<b>Tavsiya etiladigan buyruq shabloni:</b><br>
-                "O'zbekiston Respublikasi qonunchiligi va SamDVMCHBU nizomiga asosan, Veterinariya profilaktikasi va davolash fakultetida... bo'yicha ushbu buyruq qabul qilindi. Ijro etish fakultet dekanatiga yuklatilsin."`;
-            } else {
-                reply += `Fakultet hujjatlari portali bo'yicha har qanday savolingizga yordam berishga tayyorman!`;
-            }
-
-            chatBox.innerHTML += `<div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl text-slate-200">${reply}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }, 500);
-    });
-}
-
-// QIDIRUV VA FILTRLAR
-const searchInput = document.getElementById('search-input');
-const filterYear = document.getElementById('filter-academic-year');
-const filterCategory = document.getElementById('filter-category');
-
-if (searchInput) searchInput.addEventListener('input', renderDocuments);
-if (filterYear) filterYear.addEventListener('change', renderDocuments);
-if (filterCategory) filterCategory.addEventListener('change', renderDocuments);
+        const prompt = promptInput ? promptInput.value.trim() : ''

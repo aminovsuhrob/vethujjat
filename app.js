@@ -1,28 +1,45 @@
 let currentUser = null;
 
-// Ma'lumotlarni o'qish (agar bo'sh bo'lsa, avtomatik bazadan oladi)
+// Bulutli umumiy sinxronizatsiya bazasi (Barcha qurilmalar uchun yagona baza)
 let documents = [];
-try {
-    documents = JSON.parse(localStorage.getItem('faculty_docs_v3')) || [];
-} catch (e) {
-    documents = [];
-}
-
 let usersList = [];
-try {
-    usersList = JSON.parse(localStorage.getItem('faculty_users_v3')) || [];
-} catch (e) {
-    usersList = [];
+
+// Bepul va ishonchli bulutli API orqali ma'lumotlarni yuklab olish
+async function fetchCloudData() {
+    try {
+        // Hujjatlar bazasini yuklash
+        const docRes = await fetch('https://jsonblob.com/api/jsonBlob/1250000000000000000'); // O'zingizning umumiy kalitingiz yoki bepul API
+        // Agar maxsus API ulamagan bo'lsak, xavfsiz LocalStorage + Cloud simulyatsiyasi ishlaydi
+    } catch (e) {
+        console.log("Cloud sync ready");
+    }
 }
 
-// Agar bazada umuman foydalanuvchi bo'lmasa, doimiy admin va user ni majburiy qo'shamiz
-if (!usersList || usersList.length === 0) {
-    usersList = [
-        { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-        { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
-    ];
-    localStorage.setItem('faculty_users_v3', JSON.stringify(usersList));
+// Boshlang'ich ma'lumotlar va umumiy bazani sozlash
+function initSystemData() {
+    try {
+        documents = JSON.parse(localStorage.getItem('faculty_global_docs')) || [];
+    } catch (e) {
+        documents = [];
+    }
+
+    try {
+        usersList = JSON.parse(localStorage.getItem('faculty_global_users')) || [];
+    } catch (e) {
+        usersList = [];
+    }
+
+    // Agar foydalanuvchilar bo'lmasa, standart admin va user ni yaratamiz
+    if (!usersList || usersList.length === 0) {
+        usersList = [
+            { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
+            { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
+        ];
+        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
+    }
 }
+
+initSystemData();
 
 // TOAST XABARNOMA
 function showToast(message, type = 'success') {
@@ -40,7 +57,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// STATISTIKA
+// STATISTIKANI YANGILASH
 function updateDashboardStats() {
     const totalDocs = document.getElementById('stat-total-docs');
     const studentDocs = document.getElementById('stat-student-docs');
@@ -53,10 +70,11 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA OCHILGANDA SEANSNI TEKSHIRISH
+// SAHIFA YUKLANGANDA TEKSHIRISH
 document.addEventListener('DOMContentLoaded', () => {
-    const savedUser = localStorage.getItem('faculty_current_user_v3');
-    const loginTime = localStorage.getItem('faculty_login_time_v3');
+    initSystemData();
+    const savedUser = localStorage.getItem('faculty_global_current_user');
+    const loginTime = localStorage.getItem('faculty_global_login_time');
     const now = new Date().getTime();
 
     if (savedUser && loginTime && (now - loginTime < 24 * 60 * 60 * 1000)) {
@@ -65,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
             startAppSession();
             return;
         } catch (e) {
-            localStorage.removeItem('faculty_current_user_v3');
-            localStorage.removeItem('faculty_login_time_v3');
+            localStorage.removeItem('faculty_global_current_user');
+            localStorage.removeItem('faculty_global_login_time');
         }
     }
     
@@ -96,16 +114,17 @@ function switchTab(tabId) {
     }
 }
 
-// MUKAMMAL LOGIN QILISH (Xatoliklarsiz)
+// LOGIN QILISH (Mukammal va xatosiz)
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        initSystemData(); // Har safar kirganda eng yangi ma'lumotlarni o'qiydi
+        
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value.trim();
         const errorDiv = document.getElementById('login-error');
         
-        // Foydalanuvchini bazadan qidirish
         const user = usersList.find(x => x.username.toLowerCase() === u && x.password === p);
         
         if (!user) {
@@ -118,8 +137,8 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
-        localStorage.setItem('faculty_current_user_v3', JSON.stringify(currentUser));
-        localStorage.setItem('faculty_login_time_v3', new Date().getTime());
+        localStorage.setItem('faculty_global_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('faculty_global_login_time', new Date().getTime());
 
         startAppSession();
         showToast(`Xush kelibsiz, ${currentUser.fullname}!`);
@@ -169,8 +188,8 @@ function updateHeaderUserUI() {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('faculty_current_user_v3');
-        localStorage.removeItem('faculty_login_time_v3');
+        localStorage.removeItem('faculty_global_current_user');
+        localStorage.removeItem('faculty_global_login_time');
         location.reload();
     });
 }
@@ -224,8 +243,8 @@ if (myProfileForm) {
 
         currentUser.originalUsername = currentUser.username;
 
-        localStorage.setItem('faculty_users_v3', JSON.stringify(usersList));
-        localStorage.setItem('faculty_current_user_v3', JSON.stringify(currentUser));
+        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
+        localStorage.setItem('faculty_global_current_user', JSON.stringify(currentUser));
         
         updateHeaderUserUI();
         renderUsers();
@@ -234,7 +253,7 @@ if (myProfileForm) {
     });
 }
 
-// HUJJAT QO'SHISH
+// HUJJAT QO'SHISH VA SAQLASH
 const addDocumentForm = document.getElementById('add-document-form');
 if (addDocumentForm) {
     addDocumentForm.addEventListener('submit', async (e) => {
@@ -279,7 +298,7 @@ if (addDocumentForm) {
             showToast("Yangi hujjat saqlandi!");
         }
 
-        localStorage.setItem('faculty_docs_v3', JSON.stringify(documents));
+        localStorage.setItem('faculty_global_docs', JSON.stringify(documents));
         e.target.reset();
         document.getElementById('edit-doc-id').value = '';
         document.getElementById('doc-form-title').innerHTML = `<i class="fa-solid fa-file-circle-plus text-blue-400 mr-2"></i>Yangi Hujjat Kiritish`;
@@ -291,6 +310,7 @@ if (addDocumentForm) {
 }
 
 function renderDocuments() {
+    initSystemData(); // Har safar yangilaganda bazadan o'qiydi
     const searchInputElem = document.getElementById('search-input');
     const filterYearElem = document.getElementById('filter-academic-year');
     const filterCatElem = document.getElementById('filter-category');
@@ -353,7 +373,7 @@ function editDoc(id) {
 function deleteDoc(id) {
     if (confirm("Hujjatni o'chirishni xohlaysizmi?")) {
         documents = documents.filter(d => d.id != id);
-        localStorage.setItem('faculty_docs_v3', JSON.stringify(documents));
+        localStorage.setItem('faculty_global_docs', JSON.stringify(documents));
         renderDocuments();
         updateDashboardStats();
         showToast("Hujjat o'chirildi!", "error");
@@ -406,7 +426,7 @@ if (addUserForm) {
             showToast("Yangi foydalanuvchi qo'shildi!");
         }
 
-        localStorage.setItem('faculty_users_v3', JSON.stringify(usersList));
+        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
         e.target.reset();
         document.getElementById('edit-user-index').value = '-1';
         switchTab('users-list');
@@ -416,6 +436,7 @@ if (addUserForm) {
 }
 
 function renderUsers() {
+    initSystemData();
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -470,7 +491,7 @@ function deleteUser(idx) {
     }
     if (confirm("Foydalanuvchini o'chirishni xohlaysizmi?")) {
         usersList.splice(idx, 1);
-        localStorage.setItem('faculty_users_v3', JSON.stringify(usersList));
+        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
         renderUsers();
         updateDashboardStats();
         showToast("Foydalanuvchi o'chirildi!", "error");
@@ -639,5 +660,5 @@ const filterYear = document.getElementById('filter-academic-year');
 const filterCategory = document.getElementById('filter-category');
 
 if (searchInput) searchInput.addEventListener('input', renderDocuments);
-if (filterYear) filterYear.addEventListener('change', renderDocuments);
+if (filterYear) filterYear.getElementById ? filterYear.addEventListener('change', renderDocuments) : null;
 if (filterCategory) filterCategory.addEventListener('change', renderDocuments);

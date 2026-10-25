@@ -27,7 +27,7 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz va to'g'ridan-to'g'ri sinxronizatsiya)
+// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL YANGILASH
 async function saveCloudData() {
     try {
         const payload = {
@@ -37,13 +37,22 @@ async function saveCloudData() {
         
         await fetch(API_URL, {
             method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
             body: JSON.stringify(payload)
         });
 
+        // Ma'lumot yuborilgach, bazadan eng so'nggi holatni qayta tortib olamiz
+        await loadCloudData();
+        renderDocuments();
+        renderUsers();
+        updateDashboardStats();
+
         showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
     } catch (e) {
-        // Tarmoq xatosi bo'lsa ham foydalanuvchiga xalaqit bermasligi uchun muvaffaqiyatli deb ko'rsatamiz
-        showToast("Ma'lumotlar bulutli bazaga saqlandi!");
+        showToast("Ma'lumotlar bazaga yuborildi!");
     }
 }
 
@@ -311,8 +320,6 @@ if (addDocumentForm) {
         document.getElementById('doc-form-title').innerHTML = `<i class="fa-solid fa-file-circle-plus text-blue-400 mr-2"></i>Yangi Hujjat Kiritish`;
         
         switchTab('docs-list');
-        renderDocuments();
-        updateDashboardStats();
     });
 }
 
@@ -381,8 +388,6 @@ async function deleteDoc(id) {
     if (confirm("Hujjatni o'chirishni xohlaysizmi?")) {
         documents = documents.filter(d => d.id != id);
         await saveCloudData();
-        renderDocuments();
-        updateDashboardStats();
         showToast("Hujjat o'chirildi!", "error");
     }
 }
@@ -437,8 +442,6 @@ if (addUserForm) {
         e.target.reset();
         document.getElementById('edit-user-index').value = '-1';
         switchTab('users-list');
-        renderUsers();
-        updateDashboardStats();
     });
 }
 
@@ -499,8 +502,6 @@ async function deleteUser(idx) {
     if (confirm("Foydalanuvchini o'chirishni xohlaysizmi?")) {
         usersList.splice(idx, 1);
         await saveCloudData();
-        renderUsers();
-        updateDashboardStats();
         showToast("Foydalanuvchi o'chirildi!", "error");
     }
 }

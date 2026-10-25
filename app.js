@@ -18,7 +18,6 @@ async function loadCloudData() {
         console.log("Tarmoqdan o'qishda xatolik, lokal xotiradan foydalanilmoqda");
     }
 
-    // Agar bazada foydalanuvchilar bo'lmasa, standart admin va userni qo'shamiz
     if (!usersList || usersList.length === 0) {
         usersList = [
             { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
@@ -40,7 +39,6 @@ async function saveCloudData() {
             body: JSON.stringify(payload)
         });
 
-        // Serverdan eng so'nggi ma'lumotni qayta tortib olamiz
         await loadCloudData();
         renderDocuments();
         renderUsers();
@@ -84,7 +82,7 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA (Login muammosini oldini olish)
+// SAHIFA YUKLANGANDA
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCloudData();
 
@@ -588,79 +586,4 @@ if (exportExcelBtn) {
         `;
 
         const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `fakultet_hujjatlari_${new Date().toISOString().slice(0, 10)}.xls`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showToast("Excel fayli mukammal shaklda yuklab olindi!");
-    });
-}
-
-// PDF MODAL
-function openPdf(id) {
-    const doc = documents.find(d => d.id == id);
-    if (doc) {
-        document.getElementById('pdf-modal-title').textContent = doc.title;
-        document.getElementById('pdf-frame').src = doc.pdfUrl;
-        document.getElementById('pdf-modal').classList.remove('hidden');
-    }
-}
-
-const closePdfBtn = document.getElementById('close-pdf-btn');
-if (closePdfBtn) {
-    closePdfBtn.addEventListener('click', () => document.getElementById('pdf-modal').classList.add('hidden'));
-}
-
-// AI YORDAMCHI
-const openAiBtn = document.getElementById('open-ai-btn');
-if (openAiBtn) {
-    openAiBtn.addEventListener('click', () => document.getElementById('ai-modal').classList.remove('hidden'));
-}
-
-const closeAiBtn = document.getElementById('close-ai-btn');
-if (closeAiBtn) {
-    closeAiBtn.addEventListener('click', () => document.getElementById('ai-modal').classList.add('hidden'));
-}
-
-const sendAiBtn = document.getElementById('send-ai-btn');
-if (sendAiBtn) {
-    sendAiBtn.addEventListener('click', () => {
-        const promptInput = document.getElementById('ai-user-input');
-        const prompt = promptInput ? promptInput.value.trim() : '';
-        const chatBox = document.getElementById('ai-chat-box');
-
-        if (!prompt || !chatBox) return;
-
-        chatBox.innerHTML += `<div class="bg-blue-950/60 p-2.5 rounded-xl text-right">${prompt}</div>`;
-        promptInput.value = '';
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        setTimeout(() => {
-            let reply = `Hurmatli xodim, sizning <b>"${prompt}"</b> bo'yicha so'rovingiz tahlil qilindi.<br><br>`;
-            const lower = prompt.toLowerCase();
-
-            if (lower.includes('buyruq') || lower.includes('talaba')) {
-                reply += `<b>Tavsiya etiladigan buyruq shabloni:</b><br>
-                "O'zbekiston Respublikasi qonunchiligi va SamDVMCHBU nizomiga asosan, Veterinariya profilaktikasi va davolash fakultetida... bo'yicha ushbu buyruq qabul qilindi."`;
-            } else {
-                reply += `Fakultet hujjatlari portali bo'yicha har qanday savolingizga yordam berishga tayyorman!`;
-            }
-
-            chatBox.innerHTML += `<div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl text-slate-200">${reply}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }, 500);
-    });
-}
-
-// QIDIRUV VA FILTRLAR
-const searchInput = document.getElementById('search-input');
-let filterYear = document.getElementById('filter-academic-year');
-let filterCategory = document.getElementById('filter-category');
-
-if (searchInput) searchInput.addEventListener('input', renderDocuments);
-if (filterYear) filterYear.addEventListener('change', renderDocuments);
-if (filterCategory) filterCategory.addEventListener('change', renderDocuments);
+        const url = URL.createObjectURL(blob

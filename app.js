@@ -1,45 +1,50 @@
 let currentUser = null;
-
-// Bulutli umumiy sinxronizatsiya bazasi (Barcha qurilmalar uchun yagona baza)
 let documents = [];
 let usersList = [];
 
-// Bepul va ishonchli bulutli API orqali ma'lumotlarni yuklab olish
-async function fetchCloudData() {
-    try {
-        // Hujjatlar bazasini yuklash
-        const docRes = await fetch('https://jsonblob.com/api/jsonBlob/1250000000000000000'); // O'zingizning umumiy kalitingiz yoki bepul API
-        // Agar maxsus API ulamagan bo'lsak, xavfsiz LocalStorage + Cloud simulyatsiyasi ishlaydi
-    } catch (e) {
-        console.log("Cloud sync ready");
-    }
-}
+// API manzili (Siz bergan bulutli baza)
+const API_URL = 'https://api.npoint.io/696ee4503bd0e85fb7c8';
 
-// Boshlang'ich ma'lumotlar va umumiy bazani sozlash
-function initSystemData() {
+// BULUTLI BAZADAN MA'LUMOTLARNI YUKLAB OLISH
+async function loadCloudData() {
     try {
-        documents = JSON.parse(localStorage.getItem('faculty_global_docs')) || [];
+        const response = await fetch(API_URL);
+        if (response.ok) {
+            const data = await response.json();
+            documents = data.documents || [];
+            usersList = data.usersList || [];
+        }
     } catch (e) {
-        documents = [];
+        console.log("Internetga ulanishda xatolik, lokal xotiradan o'qilmoqda");
     }
 
-    try {
-        usersList = JSON.parse(localStorage.getItem('faculty_global_users')) || [];
-    } catch (e) {
-        usersList = [];
-    }
-
-    // Agar foydalanuvchilar bo'lmasa, standart admin va user ni yaratamiz
+    // Agar baza bo'sh bo'lsa, standart admin va user ni qo'shamiz
     if (!usersList || usersList.length === 0) {
         usersList = [
             { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
             { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
         ];
-        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
     }
 }
 
-initSystemData();
+// BULUTLI BAZAGA MA'LUMOTLARNI SAQLASH
+async function saveCloudData() {
+    try {
+        const payload = {
+            documents: documents,
+            usersList: usersList
+        };
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.log("Bulutga saqlashda xatolik:", e);
+    }
+}
 
 // TOAST XABARNOMA
 function showToast(message, type = 'success') {
@@ -57,7 +62,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// STATISTIKANI YANGILASH
+// STATISTIKA
 function updateDashboardStats() {
     const totalDocs = document.getElementById('stat-total-docs');
     const studentDocs = document.getElementById('stat-student-docs');
@@ -70,11 +75,12 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA TEKSHIRISH
-document.addEventListener('DOMContentLoaded', () => {
-    initSystemData();
-    const savedUser = localStorage.getItem('faculty_global_current_user');
-    const loginTime = localStorage.getItem('faculty_global_login_time');
+// SAHIFA YUKLANGANDA
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCloudData();
+
+    const savedUser = localStorage.getItem('faculty_cloud_current_user');
+    const loginTime = localStorage.getItem('faculty_cloud_login_time');
     const now = new Date().getTime();
 
     if (savedUser && loginTime && (now - loginTime < 24 * 60 * 60 * 1000)) {
@@ -83,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
             startAppSession();
             return;
         } catch (e) {
-            localStorage.removeItem('faculty_global_current_user');
-            localStorage.removeItem('faculty_global_login_time');
+            localStorage.removeItem('faculty_cloud_current_user');
+            localStorage.removeItem('faculty_cloud_login_time');
         }
     }
     
@@ -114,13 +120,13 @@ function switchTab(tabId) {
     }
 }
 
-// LOGIN QILISH (Mukammal va xatosiz)
+// LOGIN QILISH
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        initSystemData(); // Har safar kirganda eng yangi ma'lumotlarni o'qiydi
-        
+        await loadCloudData(); // Kirishdan oldin bulutdan eng yangi ma'lumotni tortib oladi
+
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value.trim();
         const errorDiv = document.getElementById('login-error');
@@ -137,8 +143,8 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
-        localStorage.setItem('faculty_global_current_user', JSON.stringify(currentUser));
-        localStorage.setItem('faculty_global_login_time', new Date().getTime());
+        localStorage.setItem('faculty_cloud_current_user', JSON.stringify(currentUser));
+        localStorage.setItem('faculty_cloud_login_time', new Date().getTime());
 
         startAppSession();
         showToast(`Xush kelibsiz, ${currentUser.fullname}!`);
@@ -188,8 +194,8 @@ function updateHeaderUserUI() {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('faculty_global_current_user');
-        localStorage.removeItem('faculty_global_login_time');
+        localStorage.removeItem('faculty_cloud_current_user');
+        localStorage.removeItem('faculty_cloud_login_time');
         location.reload();
     });
 }
@@ -243,17 +249,17 @@ if (myProfileForm) {
 
         currentUser.originalUsername = currentUser.username;
 
-        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
-        localStorage.setItem('faculty_global_current_user', JSON.stringify(currentUser));
+        await saveCloudData(); // Bulutga yuboramiz
+        localStorage.setItem('faculty_cloud_current_user', JSON.stringify(currentUser));
         
         updateHeaderUserUI();
         renderUsers();
         updateDashboardStats();
-        showToast("Shaxsiy profilingiz va ma'lumotlaringiz yangilandi!");
+        showToast("Shaxsiy profilingiz va parolingiz bulutli bazada yangilandi!");
     });
 }
 
-// HUJJAT QO'SHISH VA SAQLASH
+// HUJJAT QO'SHISH VA BULUTGA SAQLASH
 const addDocumentForm = document.getElementById('add-document-form');
 if (addDocumentForm) {
     addDocumentForm.addEventListener('submit', async (e) => {
@@ -295,10 +301,11 @@ if (addDocumentForm) {
             showToast("Hujjat tahrirlandi!");
         } else {
             documents.unshift(docData);
-            showToast("Yangi hujjat saqlandi!");
+            showToast("Yangi hujjat bulutga saqlandi!");
         }
 
-        localStorage.setItem('faculty_global_docs', JSON.stringify(documents));
+        await saveCloudData(); // Hamma kompyuterlar ko'rishi uchun bulutga yuboramiz
+
         e.target.reset();
         document.getElementById('edit-doc-id').value = '';
         document.getElementById('doc-form-title').innerHTML = `<i class="fa-solid fa-file-circle-plus text-blue-400 mr-2"></i>Yangi Hujjat Kiritish`;
@@ -309,8 +316,8 @@ if (addDocumentForm) {
     });
 }
 
-function renderDocuments() {
-    initSystemData(); // Har safar yangilaganda bazadan o'qiydi
+async function renderDocuments() {
+    await loadCloudData(); // Har safar chizishdan oldin bulutdan yangilaydi
     const searchInputElem = document.getElementById('search-input');
     const filterYearElem = document.getElementById('filter-academic-year');
     const filterCatElem = document.getElementById('filter-category');
@@ -370,10 +377,10 @@ function editDoc(id) {
     switchTab('add-doc');
 }
 
-function deleteDoc(id) {
+async function deleteDoc(id) {
     if (confirm("Hujjatni o'chirishni xohlaysizmi?")) {
         documents = documents.filter(d => d.id != id);
-        localStorage.setItem('faculty_global_docs', JSON.stringify(documents));
+        await saveCloudData();
         renderDocuments();
         updateDashboardStats();
         showToast("Hujjat o'chirildi!", "error");
@@ -426,7 +433,7 @@ if (addUserForm) {
             showToast("Yangi foydalanuvchi qo'shildi!");
         }
 
-        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
+        await saveCloudData();
         e.target.reset();
         document.getElementById('edit-user-index').value = '-1';
         switchTab('users-list');
@@ -435,8 +442,8 @@ if (addUserForm) {
     });
 }
 
-function renderUsers() {
-    initSystemData();
+async function renderUsers() {
+    await loadCloudData();
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -484,14 +491,14 @@ function editUser(idx) {
     switchTab('add-user');
 }
 
-function deleteUser(idx) {
+async function deleteUser(idx) {
     if (usersList[idx].username === 'admin') {
         showToast('Asosiy admin hisobini o`chirib bo`lmaydi!', 'error');
         return;
     }
     if (confirm("Foydalanuvchini o'chirishni xohlaysizmi?")) {
         usersList.splice(idx, 1);
-        localStorage.setItem('faculty_global_users', JSON.stringify(usersList));
+        await saveCloudData();
         renderUsers();
         updateDashboardStats();
         showToast("Foydalanuvchi o'chirildi!", "error");
@@ -660,5 +667,5 @@ const filterYear = document.getElementById('filter-academic-year');
 const filterCategory = document.getElementById('filter-category');
 
 if (searchInput) searchInput.addEventListener('input', renderDocuments);
-if (filterYear) filterYear.getElementById ? filterYear.addEventListener('change', renderDocuments) : null;
+if (filterYear) filterYear.addEventListener('change', renderDocuments);
 if (filterCategory) filterCategory.addEventListener('change', renderDocuments);

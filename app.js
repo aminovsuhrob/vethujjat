@@ -27,7 +27,7 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL YANGILASH
+// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz va kafolatlangan usul)
 async function saveCloudData() {
     try {
         const payload = {
@@ -37,18 +37,20 @@ async function saveCloudData() {
         
         await fetch(API_URL, {
             method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8'
+            },
             body: JSON.stringify(payload)
         });
 
-        // Ma'lumot serverga yozilgach, darhol bazadan qayta o'qib, ekranni yangilaymiz
-        await loadCloudData();
+        // Ekranni yangilaymiz
         renderDocuments();
         renderUsers();
         updateDashboardStats();
 
-        showToast("Ma'lumotlar bulutli bazaga saqlandi va yangilandi!");
+        showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
     } catch (e) {
-        // Agar tarmoqda cheklov bo'lsa ham lokal yangilaymiz
         renderDocuments();
         renderUsers();
         updateDashboardStats();

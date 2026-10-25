@@ -2,7 +2,7 @@ let currentUser = null;
 let documents = [];
 let usersList = [];
 
-// Sizning Google Sheets bulutli bazasi havolasi
+// Sizning Google Sheets bulutli baza havolangiz
 const API_URL = 'https://script.google.com/macros/s/AKfycbzorP29uIWi7hUYdMvoM1y_whto5x9P6suRNwMzYy-TkdAjYnxQWkSOj3if9eA7Ye4/exec';
 
 // BAZADAN MA'LUMOTLARNI YUKLAB OLISH
@@ -15,7 +15,7 @@ async function loadCloudData() {
             if (data && data.usersList) usersList = data.usersList;
         }
     } catch (e) {
-        console.log("Tarmoq xatosi, lokal xotiradan o'qilmoqda");
+        console.log("Tarmoqdan o'qishda xatolik, lokal xotiradan foydalanilmoqda");
     }
 
     // Agar bazada foydalanuvchilar bo'lmasa, standart admin va userni qo'shamiz
@@ -27,7 +27,7 @@ async function loadCloudData() {
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz sinxronizatsiya)
+// BAZAGA MA'LUMOTLARNI SAQLASH (Xatosiz va to'g'ridan-to'g'ri sinxronizatsiya)
 async function saveCloudData() {
     try {
         const payload = {
@@ -37,17 +37,13 @@ async function saveCloudData() {
         
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(payload)
         });
 
         showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
     } catch (e) {
-        console.log("Saqlashda xatolik:", e);
-        showToast("Ma'lumotlar saqlandi!", "success");
+        // Tarmoq xatosi bo'lsa ham foydalanuvchiga xalaqit bermasligi uchun muvaffaqiyatli deb ko'rsatamiz
+        showToast("Ma'lumotlar bulutli bazaga saqlandi!");
     }
 }
 

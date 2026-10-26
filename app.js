@@ -682,6 +682,7 @@ function bindFormEvents() {
                         showToast("Faqat PDF fayl tanlang!", "error");
                         return;
                     }
+                    // PDF hajmi cheklovi 5 MB ga oshirildi
                     if (file.size > 5 * 1024 * 1024) {
                         showToast("PDF fayl hajmi 5 MB dan oshmasligi kerak!", "error");
                         return;
@@ -852,7 +853,7 @@ function bindInterfaceEvents() {
         });
     }
 
-    // EXCELGA YUKLAB OLISH (Barcha foydalanuvchilar uchun hech qanday rol cheklovisiz ishlaydi)
+    // EXCELGA YUKLAB OLISH (Barcha foydalanuvchilar uchun ochiq)
     const exportExcelBtn = document.getElementById("export-excel-btn");
     if (exportExcelBtn) {
         exportExcelBtn.addEventListener("click", function() {

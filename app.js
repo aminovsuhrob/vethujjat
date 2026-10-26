@@ -27,6 +27,7 @@ async function loadCloudData() {
                 usersList = data.usersList || [];
             }
 
+            // Agar bazada foydalanuvchilar bo'lmasa, boshlang'ich admin va userni qo'shamiz
             if (!usersList || usersList.length === 0) {
                 usersList = [
                     { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
@@ -95,7 +96,7 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA (Xatolik to'g'rilangan qism)
+// SAHIFA YUKLANGANDA (Xatolik butunlay to'g'rilangan qism)
 document.addEventListener('DOMContentLoaded', async () => {
     // Avval bazadan ma'lumotlar to'liq yuklanishini kutamiz
     await loadCloudData();
@@ -105,11 +106,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
-            const validUser = usersList.find(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
+            const validUser = usersList.find(x => x.username && currentUser.username && x.username.toLowerCase() === currentUser.username.toLowerCase());
             if (validUser) {
                 currentUser = validUser;
+                currentUser.originalUsername = validUser.username;
                 startAppSession();
-                return;
+                return; // Foydalanuvchi topilsa, sahifada qoladi va login chiqmaydi
             }
         } catch (e) {}
     }

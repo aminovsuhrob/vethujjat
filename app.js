@@ -682,8 +682,8 @@ function bindFormEvents() {
                         showToast("Faqat PDF fayl tanlang!", "error");
                         return;
                     }
-                    if (file.size > 300 * 1024) {
-                        showToast("Tez ishlashi uchun PDF fayl hajmi 300 KB dan kichik bo'lishi kerak!", "error");
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast("PDF fayl hajmi 5 MB dan oshmasligi kerak!", "error");
                         return;
                     }
                     pdfUrl = await readFileAsDataURL(file);

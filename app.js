@@ -16,7 +16,7 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 const facultyRef = db.ref("faculty_data");
 
-const DEFAULT_AVATAR = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFrXs6KvH1wdXCC0AERLtlrcSpk1zpdL6WialHi6hIGg&s";
+const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];

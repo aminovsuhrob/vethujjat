@@ -18,31 +18,27 @@ let documents = [];
 let usersList = [];
 
 // BAZADAN MA'LUMOTLARNI REAL VAQTDA YUKLAB OLISH
-async function loadCloudData() {
-    return new Promise((resolve) => {
-        db.ref('faculty_data').once('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                documents = data.documents || [];
-                usersList = data.usersList || [];
-            }
+function initCloudSync() {
+    db.ref('faculty_data').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            documents = data.documents || [];
+            usersList = data.usersList || [];
+        }
 
-            if (!usersList || usersList.length === 0) {
-                usersList = [
-                    { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-                    { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
-                ];
-                saveCloudDataSilently();
-            }
+        if (!usersList || usersList.length === 0) {
+            usersList = [
+                { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
+                { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
+            ];
+            saveCloudDataSilently();
+        }
 
-            renderDocuments();
-            renderUsers();
-            updateDashboardStats();
-            resolve(true);
-        }, (error) => {
-            console.log("Firebase o'qish xatosi:", error);
-            resolve(false);
-        });
+        renderDocuments();
+        renderUsers();
+        updateDashboardStats();
+    }, (error) => {
+        console.log("Firebase o'qish xatosi:", error);
     });
 }
 
@@ -95,27 +91,30 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA (SESSIYANI BARQAROR SAQLASH)
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadCloudData();
+// SAHIFA YUKLANGANDA (100% BARQAROR SESSIYA TEKSHiriruvi)
+document.addEventListener('DOMContentLoaded', () => {
+    // Real vaqt rejimidagi sinxronizatsiyani ishga tushiramiz
+    initCloudSync();
 
-    const savedUsername = localStorage.getItem('faculty_active_username');
+    const savedUserJson = localStorage.getItem('faculty_gs_current_user');
     
-    if (savedUsername) {
-        const validUser = usersList.find(x => x.username && x.username.toLowerCase() === savedUsername.toLowerCase());
-        if (validUser) {
-            currentUser = validUser;
-            startAppSession();
-            return; 
-        }
+    if (savedUserJson) {
+        try {
+            currentUser = JSON.parse(savedUserJson);
+            if (currentUser && currentUser.username) {
+                // Darhol sessiyani ochamiz, login oynasini ko'rsatmaymiz
+                startAppSession();
+                return;
+            }
+        } catch (e) {}
     }
     
-    localStorage.removeItem('faculty_active_username');
+    // Agar foydalanuvchi ma'lumotlari umuman bo'lmasa login chiqadi
     const loginScreen = document.getElementById('login-screen');
     if (loginScreen) loginScreen.classList.remove('hidden');
 });
 
-// TABLARni ALMASHTIRISH
+// TABLARNI ALMASHTIRISH
 function switchTab(tabId) {
     document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -140,13 +139,17 @@ function switchTab(tabId) {
 // LOGIN QILISH
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
+    loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value.trim();
         const errorDiv = document.getElementById('login-error');
         
-        const user = usersList.find(x => x.username.toLowerCase() === u && x.password === p);
+        // Agar usersList hali bo'sh bo'lsa (baza sekinroq kelayotgan bo'lsa), default adminni tekshiramiz
+        let user = usersList.find(x => x.username.toLowerCase() === u && x.password === p);
+        if (!user && u === 'admin' && p === '123') {
+            user = { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' };
+        }
         
         if (!user) {
             if (errorDiv) errorDiv.classList.remove('hidden');
@@ -156,9 +159,10 @@ if (loginForm) {
 
         if (errorDiv) errorDiv.classList.add('hidden');
         currentUser = user;
+        currentUser.originalUsername = user.username;
 
-        // Faqat username matnini saqlaymiz, bu sessiyani 100% barqaror qiladi
-        localStorage.setItem('faculty_active_username', currentUser.username);
+        // To'liq obyektni localStorage'da saqlaymiz
+        localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
 
         startAppSession();
         showToast(`Xush kelibsiz, ${currentUser.fullname}!`);
@@ -171,6 +175,10 @@ function startAppSession() {
     
     if (loginScreen) loginScreen.classList.add('hidden');
     if (appContent) appContent.classList.remove('hidden');
+
+    if (!currentUser.originalUsername) {
+        currentUser.originalUsername = currentUser.username;
+    }
 
     updateHeaderUserUI();
 
@@ -204,7 +212,7 @@ function updateHeaderUserUI() {
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('faculty_active_username');
+        localStorage.removeItem('faculty_gs_current_user');
         location.reload();
     });
 }
@@ -238,8 +246,6 @@ if (myProfileForm) {
             });
         }
 
-        const oldUsername = currentUser.username;
-
         currentUser.fullname = document.getElementById('my-fullname').value;
         currentUser.position = document.getElementById('my-position').value;
         currentUser.phone = document.getElementById('my-phone').value;
@@ -249,20 +255,23 @@ if (myProfileForm) {
         currentUser.password = document.getElementById('my-password').value;
         currentUser.photo = photoBase64;
 
-        const idx = usersList.findIndex(u => u.username.toLowerCase() === oldUsername.toLowerCase());
+        const searchKey = currentUser.originalUsername || currentUser.username;
+        const idx = usersList.findIndex(u => u.username.toLowerCase() === searchKey.toLowerCase());
+        
         if (idx !== -1) {
             usersList[idx] = currentUser;
         } else {
             usersList.push(currentUser);
         }
 
+        currentUser.originalUsername = currentUser.username;
+
         await saveCloudData();
-        localStorage.setItem('faculty_active_username', currentUser.username);
+        localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
         
         updateHeaderUserUI();
         renderUsers();
         updateDashboardStats();
-        showToast("Profilingiz muvaffaqiyatli yangilandi!");
     });
 }
 

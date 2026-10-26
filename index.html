@@ -1,389 +1,433 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="uz" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veterinariya profilaktikasi va davolash fakulteti - Smart Portal</title>
+    <title>Veterinariya profilaktikasi va davolash fakulteti - Elektron Hujjatlar Portali</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151f32',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
 
-    <!-- TOAST BILDIRISHNOMALAR CONTAINER -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+    <!-- Toast Xabarnomalar konteyneri -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <div>
-        <!-- LOGIN EKRANI -->
-        <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
-            <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-md text-center">
-                <div class="mb-6 flex flex-col items-center">
-                    <div class="w-24 h-24 mb-3 p-1 bg-white rounded-full shadow-xl border-2 border-blue-500 flex items-center justify-center overflow-hidden">
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFrXs6KvH1wdXCC0AERLtlrcSpk1zpdL6WialHi6hIGg&s" alt="Logo" class="w-full h-full object-contain rounded-full">
-                    </div>
-                    <h2 class="text-base font-bold text-white uppercase tracking-wider leading-snug">
-                        Veterinariya profilaktikasi va davolash fakulteti
-                    </h2>
-                    <p class="text-xs text-blue-400 mt-1 font-medium">Fakultet Hujjatlar Portali</p>
+    <!-- 1. LOGIN EKRANI -->
+    <div id="login-screen" class="fixed inset-0 z-40 bg-slate-950 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-400 text-2xl shadow-inner">
+                    <i class="fa-solid fa-graduation-cap"></i>
                 </div>
-
-                <form id="login-form" class="space-y-4 text-left">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1"></label>
-                        <input type="text" id="username" required placeholder="Login" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1"></label>
-                        <input type="password" id="password" required placeholder="Parol" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div id="login-error" class="text-rose-500 text-xs text-center hidden font-semibold">Login yoki parol xato!</div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/25">
-                        Tizimga kirish <i class="fa-solid fa-right-to-bracket ml-2"></i>
-                    </button>
-                </form>
+                <h1 class="text-xl font-bold tracking-tight text-white">Elektron Hujjatlar Portali</h1>
+                <p class="text-xs text-slate-400 mt-1">Veterinariya profilaktikasi va davolash fakulteti</p>
             </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Foydalanuvchi nomi (Login)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user text-xs"></i></span>
+                        <input type="text" id="username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Loginni kiriting">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Parol</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Parolni kiriting">
+                    </div>
+                </div>
+
+                <div id="login-error" class="hidden text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-center">
+                    Login yoki parol xato!
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Tizimga kirish
+                </button>
+            </form>
         </div>
+    </div>
 
-        <!-- ASOSIY PORTAL -->
-        <div id="app-content" class="hidden min-h-screen flex flex-col">
-            <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
-                <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white rounded-full p-0.5 border border-blue-500 flex items-center justify-center overflow-hidden">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFrXs6KvH1wdXCC0AERLtlrcSpk1zpdL6WialHi6hIGg&s" alt="Logo" class="w-full h-full object-contain rounded-full">
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-xs sm:text-sm md:text-base text-white leading-tight uppercase">
-                                Veterinariya profilaktikasi va davolash fakulteti
-                            </h1>
-                            <p class="text-xs text-slate-400">Fakultet hujjatlari portali</p>
-                        </div>
-                    </div>
+    <!-- 2. ASOSIY ILOVA TIZIMI -->
+    <div id="app-content" class="hidden flex-1 flex flex-col">
+        <!-- HEADER -->
+        <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-blue-600/10 border border-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 shadow-inner">
+                    <i class="fa-solid fa-shield-halved text-sm"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-white tracking-wide block">VetProfilaktika Hujjatlari</span>
+                    <span class="text-[10px] text-slate-400">Bulutli Baza Tizimi</span>
+                </div>
+            </div>
 
-                    <div class="flex items-center gap-3">
-                        <button id="open-ai-btn" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Yordamchi
-                        </button>
-                        
-                        <div class="flex items-center gap-2 bg-slate-950 p-1.5 pl-3 rounded-2xl border border-slate-800">
-                            <div class="text-right hidden sm:block">
-                                <div id="user-display-name" class="text-xs font-bold text-slate-200">--</div>
-                                <span id="user-role-badge" class="inline-block px-2 py-0.2 text-[9px] rounded-full font-bold uppercase bg-slate-800 text-slate-400">--</span>
-                            </div>
-                            <img id="header-user-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="User" class="w-9 h-9 rounded-xl object-cover border border-slate-700">
-                        </div>
-
-                        <button id="logout-btn" class="bg-slate-800 hover:bg-rose-600/20 hover:text-rose-400 border border-slate-700 text-slate-300 p-2.5 rounded-xl transition" title="Chiqish">
-                            <i class="fa-solid fa-power-off"></i>
-                        </button>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-3 bg-slate-950/60 border border-slate-800/80 px-3 py-1.5 rounded-xl">
+                    <img id="header-user-avatar" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-7 h-7 rounded-lg object-cover border border-slate-700">
+                    <div class="text-left">
+                        <div id="user-display-name" class="text-xs font-medium text-slate-200">Foydalanuvchi</div>
+                        <div id="user-role-badge" class="text-[9px] uppercase tracking-wider text-blue-400 font-bold">USER</div>
                     </div>
                 </div>
 
-                <!-- TAB MENYULAR -->
-                <div class="max-w-7xl mx-auto px-4 flex gap-2 overflow-x-auto border-t border-slate-800/60 py-2">
-                    <button onclick="switchTab('docs-list')" id="tab-btn-docs-list" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white transition flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> Hujjatlar Ro'yxati</button>
-                    <button onclick="switchTab('add-doc')" id="tab-btn-add-doc" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition flex items-center gap-2 hidden admin-only"><i class="fa-solid fa-file-circle-plus"></i> Hujjat Qo'shish</button>
-                    <button onclick="switchTab('users-list')" id="tab-btn-users-list" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition flex items-center gap-2 hidden admin-only"><i class="fa-solid fa-users"></i> Adminlar va Foydalanuvchilar</button>
-                    <button onclick="switchTab('add-user')" id="tab-btn-add-user" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition flex items-center gap-2 hidden admin-only"><i class="fa-solid fa-user-plus"></i> Foydalanuvchi Qo'shish</button>
-                    <button onclick="switchTab('my-profile')" id="tab-btn-my-profile" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition flex items-center gap-2"><i class="fa-solid fa-id-card"></i> Shaxsiy Profilim</button>
-                </div>
-            </header>
+                <button id="logout-btn" title="Chiqish" class="bg-slate-800 hover:bg-rose-500/20 hover:border-rose-500/30 hover:text-rose-400 border border-slate-700 text-slate-300 w-9 h-9 rounded-xl flex items-center justify-center text-xs transition">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </header>
 
-            <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
+        <!-- MAIN LAYOUT -->
+        <div class="flex-1 flex flex-col md:flex-row">
+            <!-- SIDEBAR NAVIGATION -->
+            <aside class="w-full md:w-64 bg-slate-900/40 border-r border-slate-800 p-4 flex flex-row md:flex-col gap-2 overflow-x-auto">
+                <button onclick="switchTab('docs-list')" id="tab-btn-docs-list" class="tab-btn flex-1 md:flex-none text-left px-4 py-3 rounded-xl text-xs font-semibold bg-blue-600 text-white flex items-center gap-3 transition shadow-lg shadow-blue-600/10">
+                    <i class="fa-solid fa-folder-open w-4 text-center"></i> Hujjatlar bazasi
+                </button>
+                <button onclick="switchTab('add-doc')" id="tab-btn-add-doc" class="tab-btn admin-only flex-1 md:flex-none text-left px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition">
+                    <i class="fa-solid fa-file-circle-plus w-4 text-center"></i> Yangi hujjat qo'shish
+                </button>
+                <button onclick="switchTab('users-list')" id="tab-btn-users-list" class="tab-btn admin-only flex-1 md:flex-none text-left px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition">
+                    <i class="fa-solid fa-users-gear w-4 text-center"></i> Foydalanuvchilar
+                </button>
+                <button onclick="switchTab('add-user')" id="tab-btn-add-user" class="tab-btn admin-only flex-1 md:flex-none text-left px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition">
+                    <i class="fa-solid fa-user-plus w-4 text-center"></i> Xodim qo'shish
+                </button>
+                <button onclick="switchTab('my-profile')" id="tab-btn-my-profile" class="tab-btn flex-1 md:flex-none text-left px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition">
+                    <i class="fa-solid fa-id-card w-4 text-center"></i> Mening profilim
+                </button>
+            </aside>
+
+            <!-- CONTENT AREA -->
+            <main class="flex-1 p-6 overflow-y-auto">
                 
-                <!-- STATISTIKA DASHBOARD -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-slate-400">Jami Hujjatlar</div>
+                <!-- 1. HUJJATLAR BAZASI SECTION -->
+                <section id="section-docs-list" class="tab-section space-y-6">
+                    <!-- Dashboard Statistikasi -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                            <div class="text-slate-400 text-[11px] font-medium">Jami hujjatlar</div>
                             <div id="stat-total-docs" class="text-xl font-bold text-white mt-1">0</div>
                         </div>
-                        <div class="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-files"></i></div>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-slate-400">Talaba Buyruqlari</div>
-                            <div id="stat-student-docs" class="text-xl font-bold text-white mt-1">0</div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                            <div class="text-slate-400 text-[11px] font-medium">Talaba buyruqlari</div>
+                            <div id="stat-student-docs" class="text-xl font-bold text-blue-400 mt-1">0</div>
                         </div>
-                        <div class="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-user-graduate"></i></div>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-slate-400">Rasmiy Xatlar</div>
-                            <div id="stat-letters" class="text-xl font-bold text-white mt-1">0</div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                            <div class="text-slate-400 text-[11px] font-medium">Xatlar</div>
+                            <div id="stat-letters" class="text-xl font-bold text-emerald-400 mt-1">0</div>
                         </div>
-                        <div class="w-10 h-10 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-envelope"></i></div>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-slate-400">Foydalanuvchilar</div>
-                            <div id="stat-users" class="text-xl font-bold text-white mt-1">0</div>
+                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                            <div class="text-slate-400 text-[11px] font-medium">Xodimlar</div>
+                            <div id="stat-users" class="text-xl font-bold text-purple-400 mt-1">0</div>
                         </div>
-                        <div class="w-10 h-10 bg-purple-500/10 text-purple-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-users"></i></div>
                     </div>
-                </div>
 
-                <!-- 1. HUJJATLAR RO'YXATI -->
-                <div id="section-docs-list" class="tab-section space-y-4">
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <input type="text" id="search-input" placeholder="Hujjat nomi yoki raqami bo'yicha qidirish..." class="w-full md:w-96 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                            <select id="filter-academic-year" class="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-xl px-3 py-2.5">
+                    <!-- Filterlar va Qidiruv -->
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col lg:flex-row gap-3 items-center justify-between">
+                        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1">
+                            <input type="text" id="search-input" placeholder="Hujjat nomi yoki raqami bo'yicha qidirish..." class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-full lg:w-80">
+                            
+                            <select id="filter-academic-year" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                                 <option value="all">Barcha o'quv yillari</option>
-                                <option value="2026-2027">2026-2027</option>
+                                <option value="2023-2024">2023-2024</option>
+                                <option value="2024-2025">2024-2025</option>
                                 <option value="2025-2026">2025-2026</option>
+                                <option value="2026-2027">2026-2027</option>
                             </select>
-                            <select id="filter-category" class="bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-xl px-3 py-2.5">
+
+                            <select id="filter-category" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                                 <option value="all">Barcha bo'limlar</option>
                                 <option value="student">Talaba buyruqlari</option>
                                 <option value="letter">Xatlar</option>
                                 <option value="order">Farmoyishlar</option>
                                 <option value="internal">Ichki buyruqlar</option>
                             </select>
-                            <button id="export-excel-btn" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2">
-                                <i class="fa-solid fa-file-excel text-emerald-400"></i> Excel (Yuklab olish)
-                            </button>
                         </div>
+
+                        <!-- EXCEL TUGMASI (Endi ham admin, ham foydalanuvchilar uchun ochiq) -->
+                        <button id="export-excel-btn" class="w-full lg:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10">
+                            <i class="fa-solid fa-file-excel"></i> Excelga yuklab olish
+                        </button>
                     </div>
 
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <!-- Jadval -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="border-b border-slate-800 bg-slate-950/60 text-xs uppercase text-slate-400">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+                                    <tr>
                                         <th class="p-4">Bo'lim</th>
                                         <th class="p-4">Raqam / Sana</th>
-                                        <th class="p-4">O'quv Yili</th>
-                                        <th class="p-4">Hujjat Nomi</th>
-                                        <th class="p-4 text-center">PDF</th>
-                                        <th id="th-actions" class="p-4 text-right hidden">Amallar</th>
+                                        <th class="p-4">O'quv yili</th>
+                                        <th class="p-4">Hujjat nomi</th>
+                                        <th class="p-4 text-center">Fayl</th>
+                                        <th class="p-4 text-right" id="th-actions">Amallar</th>
                                     </tr>
                                 </thead>
-                                <tbody id="documents-table-body" class="divide-y divide-slate-800 text-sm text-slate-300"></tbody>
+                                <tbody id="documents-table-body" class="divide-y divide-slate-800/60">
+                                    <!-- Dinamik yuklanadi -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- 2. HUJJAT QO'SHISH / TAHRIRLASH -->
-                <div id="section-add-doc" class="tab-section hidden bg-slate-900 border border-blue-500/30 p-6 rounded-2xl shadow-xl max-w-3xl mx-auto">
-                    <h2 id="doc-form-title" class="text-base font-bold text-white mb-4"><i class="fa-solid fa-file-circle-plus text-blue-400 mr-2"></i>Yangi Hujjat Kiritish</h2>
-                    <form id="add-document-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="hidden" id="edit-doc-id" value="">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Bo'lim</label>
-                            <select id="doc-category" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200">
-                                <option value="student">Talaba buyruqlari</option>
-                                <option value="letter">Xatlar</option>
-                                <option value="order">Farmoyishlar</option>
-                                <option value="internal">Ichki buyruqlar</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat Raqami</label>
-                            <input type="text" id="doc-number" required placeholder="Masalan: 01-12/45" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">O'quv Yili</label>
-                            <select id="doc-academic-year" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200">
-                                <option value="2026-2027">2026-2027</option>
-                                <option value="2025-2026">2025-2026</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat Sanasi</label>
-                            <input type="date" id="doc-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat Nomi</label>
-                            <input type="text" id="doc-title" required placeholder="Hujjatning to'liq sarlavhasi..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-slate-300 mb-1">PDF Fayl (.pdf)</label>
-                            <input type="file" id="doc-pdf-file" accept=".pdf" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200">
-                        </div>
-                        <div class="md:col-span-2 flex gap-3">
-                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl transition">Saqlash</button>
-                            <button type="button" onclick="cancelDocEdit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-xl transition">Bekor qilish</button>
-                        </div>
-                    </form>
-                </div>
+                <!-- 2. YANGI HUJJAT QO'SHISH / TAHRIRLASH SECTION -->
+                <section id="section-add-doc" class="tab-section hidden max-w-2xl mx-auto">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                        <h2 id="doc-form-title" class="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-file-circle-plus text-blue-400"></i> Yangi hujjat kiritish
+                        </h2>
 
-                <!-- 3. ADMINLAR VA FOYDALANUVCHILAR RO'YXATI -->
-                <div id="section-users-list" class="tab-section hidden bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h2 class="text-base font-bold text-white mb-4"><i class="fa-solid fa-users text-purple-400 mr-2"></i>Tizim Foydalanuvchilari va Adminlar</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead>
-                                <tr class="border-b border-slate-800 text-slate-400">
-                                    <th class="p-3">Rasm</th>
-                                    <th class="p-3">Ism Familiya</th>
-                                    <th class="p-3">Lavozim</th>
-                                    <th class="p-3">Login</th>
-                                    <th class="p-3">Aloqa & Tarmoqlar</th>
-                                    <th class="p-3">Rol</th>
-                                    <th class="p-3 text-right">Amallar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
-                        </table>
+                        <form id="add-document-form" class="space-y-4">
+                            <input type="hidden" id="edit-doc-id" value="">
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat kategoriyasi</label>
+                                    <select id="doc-category" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        <option value="student">Talaba buyruqlari</option>
+                                        <option value="letter">Xatlar</option>
+                                        <option value="order">Farmoyishlar</option>
+                                        <option value="internal">Ichki buyruqlar</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">O'quv yili</label>
+                                    <select id="doc-academic-year" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        <option value="2023-2024">2023-2024</option>
+                                        <option value="2024-2025">2024-2025</option>
+                                        <option value="2025-2026" selected>2025-2026</option>
+                                        <option value="2026-2027">2026-2027</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat raqami</label>
+                                    <input type="text" id="doc-number" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Masalan: 125-A">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat sanasi</label>
+                                    <input type="date" id="doc-date" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Hujjat mavzusi / nomi</label>
+                                <textarea id="doc-title" rows="3" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Hujjat mazmuni..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">PDF fayl (Maksimal 300 KB)</label>
+                                <input type="file" id="doc-pdf-file" accept="application/pdf" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-2">
+                                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/20">Saqlash</button>
+                                <button type="button" onclick="cancelDocEdit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-5 py-3 rounded-xl transition">Bekor qilish</button>
+                            </div>
+                        </form>
                     </div>
-                </div>
+                </section>
 
-                <!-- 4. FOYDALANUVCHI / ADMIN QO'SHISH -->
-                <div id="section-add-user" class="tab-section hidden bg-slate-900 border border-purple-500/30 p-6 rounded-2xl shadow-xl max-w-xl mx-auto">
-                    <h2 id="user-form-title" class="text-base font-bold text-white mb-4"><i class="fa-solid fa-user-plus text-purple-400 mr-2"></i>Yangi Foydalanuvchi Qo'shish</h2>
-                    <form id="add-user-form" class="space-y-4">
-                        <input type="hidden" id="edit-user-index" value="-1">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Foydalanuvchi Rasmi</label>
-                            <input type="file" id="new-user-photo" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200">
+                <!-- 3. XODIMLAR / FOYDALANUVCHILAR RO'YXATI -->
+                <section id="section-users-list" class="tab-section hidden space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="p-4 border-b border-slate-800 font-bold text-xs text-white flex items-center justify-between">
+                            <span>Fakultet xodimlari va foydalanuvchilar</span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Ism Familiya</label>
-                            <input type="text" id="new-user-fullname" required placeholder="Masalan: Alisher Valiyev" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+                                    <tr>
+                                        <th class="p-3">Rasm</th>
+                                        <th class="p-3">F.I.Sh</th>
+                                        <th class="p-3">Lavozim</th>
+                                        <th class="p-3">Login</th>
+                                        <th class="p-3">Aloqa</th>
+                                        <th class="p-3">Rol</th>
+                                        <th class="p-3 text-right">Amallar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-slate-800/60">
+                                    <!-- Dinamik yuklanadi -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Lavozim</label>
-                            <input type="text" id="new-user-position" required placeholder="Masalan: Katta o'qituvchi / Inspektor" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Telefon Nomeri</label>
-                                <input type="text" id="new-user-phone" placeholder="+998 90 123 45 67" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Telegram Username</label>
-                                <input type="text" id="new-user-telegram" placeholder="@username" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Instagram Username</label>
-                            <input type="text" id="new-user-instagram" placeholder="@username" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Login</label>
-                            <input type="text" id="new-user-username" required placeholder="Loginni kiriting" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Parol</label>
-                            <input type="password" id="new-user-password" required placeholder="Parolni kiriting" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Rolni Tanlash</label>
-                            <select id="new-user-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                                <option value="user">Oddiy foydalanuvchi</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-3">
-                            <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold py-3 rounded-xl transition">Saqlash</button>
-                            <button type="button" onclick="cancelUserEdit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-xl transition">Bekor qilish</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                </section>
 
-                <!-- 5. SHAXSIY PROFILIM -->
-                <div id="section-my-profile" class="tab-section hidden bg-slate-900 border border-emerald-500/30 p-6 rounded-2xl shadow-xl max-w-2xl mx-auto">
-                    <h2 class="text-base font-bold text-white mb-6 flex items-center gap-2"><i class="fa-solid fa-id-card text-emerald-400"></i> Shaxsiy Profil Boshqaruvi</h2>
-                    
-                    <form id="my-profile-form" class="space-y-4">
-                        <div class="flex items-center gap-4 mb-4">
-                            <img id="profile-avatar-preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Avatar" class="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500/50">
+                <!-- 4. YANGI XODIM QO'SHISH / TAHRIRLASH SECTION -->
+                <section id="section-add-user" class="tab-section hidden max-w-xl mx-auto">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                        <h2 class="text-sm font-bold text-white mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus text-purple-400"></i> Xodim ma'lumotlarini boshqarish
+                        </h2>
+
+                        <form id="add-user-form" class="space-y-4">
+                            <input type="hidden" id="edit-user-index" value="-1">
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">F.I.Sh</label>
+                                    <input type="text" id="new-user-fullname" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="F.I.Sh kiriting">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Lavozimi</label>
+                                    <input type="text" id="new-user-position" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Masalan: Inspektor">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Login</label>
+                                    <input type="text" id="new-user-username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="username">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Parol</label>
+                                    <input type="text" id="new-user-password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="parol">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Telefon</label>
+                                    <input type="text" id="new-user-phone" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="+998 ...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Telegram</label>
+                                    <input type="text" id="new-user-telegram" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="@username">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Rol</label>
+                                    <select id="new-user-role" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                        <option value="user">User (Foydalanuvchi)</option>
+                                        <option value="admin">Admin (Administrator)</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Rasm almashtirish</label>
-                                <input type="file" id="my-profile-photo" accept="image/*" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200">
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Profil rasmi</label>
+                                <input type="file" id="new-user-photo" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-2">
+                                <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-purple-600/20">Saqlash</button>
+                                <button type="button" onclick="cancelUserEdit()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-5 py-3 rounded-xl transition">Bekor qilish</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 5. MENING PROFILIM SECTION -->
+                <section id="section-my-profile" class="tab-section hidden max-w-xl mx-auto">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                        <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-800">
+                            <img id="profile-avatar-preview" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500/30">
+                            <div>
+                                <h2 class="text-sm font-bold text-white">Shaxsiy ma'lumotlarni tahrirlash</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">O'z profilingiz ma'lumotlarini yangilang</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Ism Familiya</label>
-                                <input type="text" id="my-fullname" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
+                        <form id="my-profile-form" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">F.I.Sh</label>
+                                    <input type="text" id="my-fullname" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Lavozimi</label>
+                                    <input type="text" id="my-position" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Lavozim</label>
-                                <input type="text" id="my-position" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Telefon Nomeri</label>
-                                <input type="text" id="my-phone" placeholder="+998 90 123 45 67" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Telegram Username</label>
-                                <input type="text" id="my-telegram" placeholder="@username" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Instagram Username</label>
-                                <input type="text" id="my-instagram" placeholder="@username" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Login</label>
-                                <input type="text" id="my-username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Yangi Parol</label>
-                                <input type="password" id="my-password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white">
-                            </div>
-                        </div>
 
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-emerald-600/20">
-                            Ma'lumotlarni Yangilash
-                        </button>
-                    </form>
-                </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Telefon</label>
+                                    <input type="text" id="my-phone" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Telegram</label>
+                                    <input type="text" id="my-telegram" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Instagram</label>
+                                    <input type="text" id="my-instagram" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Login</label>
+                                    <input type="text" id="my-username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-300 mb-1">Parol</label>
+                                    <input type="text" id="my-password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Yangi profil rasmi</label>
+                                <input type="file" id="my-profile-photo" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/20">O'zgarishlarni saqlash</button>
+                        </form>
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>
 
-    <!-- SSUV.UZ RASMIY MA'LUMOTLARI (FOOTER) -->
-    <footer class="bg-slate-900 border-t border-slate-800 mt-12 py-8 text-xs text-slate-400">
-        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-            <div>
-                <h3 class="font-bold text-white text-sm uppercase mb-2">SamDVMCHBU</h3>
-                <p>Veterinariya profilaktikasi va davolash fakulteti elektron axborot tizimi va hujjatlar bazasi.</p>
+    <!-- PDF KO'RISH MODALI -->
+    <div id="pdf-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h3 id="pdf-modal-title" class="text-xs font-bold text-white truncate max-w-xl">Hujjat</h3>
+                <button id="close-pdf-btn" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div>
-                <h3 class="font-bold text-white text-sm uppercase mb-2">Bog'lanish va Manzil</h3>
-                <p>Samarqand shahri, Mirzo Ulug'bek ko'chasi, 77-uy</p>
-                <p class="mt-1">Ishonch telefoni: +998 (66) 234-XX-XX</p>
-            </div>
-            <div>
-                <h3 class="font-bold text-white text-sm uppercase mb-2">Foydali havolalar</h3>
-                <p><a href="https://ssuv.uz" target="_blank" class="text-blue-400 hover:underline">ssuv.uz (Rasmiy veb-sayt)</a></p>
-                <p class="mt-1">Barcha huquqlar himoyalangan © 2026</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- AI YORDAMCHI MODAL -->
-    <div id="ai-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden p-4">
-        <div class="bg-slate-900 border border-indigo-500/30 w-full max-w-2xl h-[80vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                <h3 class="font-bold text-white text-sm flex items-center gap-2"><i class="fa-solid fa-robot text-indigo-400"></i> Smart AI Yordamchisi</h3>
-                <button id="close-ai-btn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div id="ai-chat-box" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs text-slate-300">
-                <div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl">Salom! Men Fakultet elektron portalining aqlli AI yordamchisiman. Hujjat va buyruq loyihalarini tuzishda va ma'lumot izlashda yordam beraman.</div>
-            </div>
-            <div class="p-3 border-t border-slate-800 bg-slate-950 flex gap-2">
-                <input type="text" id="ai-user-input" placeholder="Buyruq matnini tayyorlash yoki savolingiz..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                <button id="send-ai-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold">Yuborish</button>
+            <div class="flex-1 bg-slate-950 p-2">
+                <iframe id="pdf-frame" src="about:blank" class="w-full h-full rounded-xl border border-slate-800"></iframe>
             </div>
         </div>
     </div>
 
-    <!-- PDF MODAL -->
-    <div id="pdf-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 hidden p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl h-[85vh] rounded-2xl flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-                <h3 id="pdf-modal-title" class="font-semibold text-white text-sm truncate">PDF Hujjat</h3>
-                <button id="close-pdf-btn" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <iframe id="pdf-frame" class="w-full h-full bg-slate-950 border-0" src=""></iframe>
-        </div>
-    </div>
-
+    <!-- JavaScript Logikasi (app.js) -->
     <script src="app.js"></script>
 </body>
 </html>

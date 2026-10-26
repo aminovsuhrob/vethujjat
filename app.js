@@ -18,7 +18,6 @@ const facultyRef = db.ref("faculty_data");
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
-// Tezkorlik uchun darhol keshdan o'qiymiz
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];
 let usersList = JSON.parse(localStorage.getItem('faculty_cache_users')) || [];
@@ -294,7 +293,6 @@ function renderDocuments() {
         );
     });
 
-    // Ko'p hujjatlarda interfeys qotib qolmasligi uchun dastlabki 100 tasi tezkor render qilinadi
     const paginated = filtered.slice(0, 100);
     const isAdmin = currentUser && currentUser.role === "admin";
 
@@ -825,6 +823,7 @@ function bindInterfaceEvents() {
     if (yearFilter) yearFilter.addEventListener("change", renderDocuments);
     if (categoryFilter) categoryFilter.addEventListener("change", renderDocuments);
 
+    // Hujjatlar jadvalidagi tugmalar uchun bosish hodisalari
     const tbody = document.getElementById("documents-table-body");
     if (tbody) {
         tbody.addEventListener("click", function(event) {
@@ -840,147 +839,92 @@ function bindInterfaceEvents() {
         });
     }
 
-    const usersTable = document.getElementById("users-table-body");
-    if (usersTable) {
-        usersTable.addEventListener("click", function(event) {
+    // Foydalanuvchilar jadvalidagi tugmalar uchun bosish hodisalari
+    const usersTbody = document.getElementById("users-table-body");
+    if (usersTbody) {
+        usersTbody.addEventListener("click", function(event) {
             const button = event.target.closest("button[data-action]");
             if (!button) return;
 
-            const index = Number(button.dataset.index);
-            if (button.dataset.action === "edit-user") editUser(index);
-            if (button.dataset.action === "delete-user") deleteUser(index);
+            const index = button.dataset.index;
+            const action = button.dataset.action;
+
+            if (action === "edit-user") editUser(index);
+            if (action === "delete-user") deleteUser(index);
         });
     }
 
-    const closePdfButton = document.getElementById("close-pdf-btn");
-    if (closePdfButton) closePdfButton.addEventListener("click", closePdfModal);
+    // Excelga yuklab olish tugmasi hodisasi
+    const exportExcelBtn = document.getElementById("export-excel-btn");
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener("click", function() {
+            if (!documents || documents.length === 0) {
+                showToast("Eksport qilish uchun hujjatlar mavjud emas!", "error");
+                return;
+            }
 
-    const exportButton = document.getElementById("export-excel-btn");
-    if (exportButton) exportButton.addEventListener("click", exportExcel);
-}
+            const categoryLabels = {
+                student: "Talaba buyruqlari",
+                letter: "Xatlar",
+                order: "Farmoyishlar",
+                internal: "Ichki buyruqlar"
+            };
 
-function exportExcel() {
-    if (!currentUser || currentUser.role !== "admin") {
-        showToast("Excel eksporti faqat administrator uchun!", "error");
-        return;
+            const excelData = documents.map((doc, index) => ({
+                "№": index + 1,
+                "Bo'lim": categoryLabels[doc.category] || doc.category,
+                "Hujjat raqami": doc.number,
+                "Sana": doc.date,
+                "O'quv yili": doc.academicYear,
+                "Hujjat nomi": doc.title
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Hujjatlar");
+
+            XLSX.writeFile(workbook, "Veterinariya_fakulteti_hujjatlari.xlsx");
+            showToast("Hujjatlar Excel formatida yuklab olindi!");
+        });
     }
 
-    if (!documents.length) {
-        showToast("Yuklab olish uchun hujjatlar mavjud emas!", "error");
-        return;
+    // PDF modalni yopish
+    const closePdfBtn = document.getElementById("close-pdf-btn");
+    const pdfModal = document.getElementById("pdf-modal");
+    if (closePdfBtn) closePdfBtn.addEventListener("click", closePdfModal);
+    if (pdfModal) {
+        pdfModal.addEventListener("click", function(e) {
+            if (e.target === pdfModal) closePdfModal();
+        });
     }
 
-    const categoryNames = {
-        student: "Talaba buyruqlari",
-        letter: "Xatlar",
-        order: "Farmoyishlar",
-        internal: "Ichki buyruqlar"
-    };
-
-    const rows = documents.map(function(doc, index) {
-        return `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${escapeHTML(categoryNames[doc.category] || doc.category)}</td>
-                <td>${escapeHTML(doc.number)}</td>
-                <td>${escapeHTML(doc.date)}</td>
-                <td>${escapeHTML(doc.academicYear)}</td>
-                <td>${escapeHTML(doc.title)}</td>
-            </tr>
-        `;
-    }).join("");
-
-    const html = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office"
-              xmlns:x="urn:schemas-microsoft-com:office:excel"
-              xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                table { border-collapse: collapse; width: 100%; }
-                th { background: #1e3a8a; color: white; border: 1px solid black; padding: 8px; }
-                td { border: 1px solid #d1d5db; padding: 6px; }
-            </style>
-        </head>
-        <body>
-            <table>
-                <thead>
-                    <tr>
-                        <th>T/R</th>
-                        <th>Bo'lim</th>
-                        <th>Hujjat raqami</th>
-                        <th>Hujjat sanasi</th>
-                        <th>O'quv yili</th>
-                        <th>Hujjat nomi</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </body>
-        </html>
-    `;
-
-    const blob = new Blob(
-        ["\ufeff", html],
-        { type: "application/vnd.ms-excel;charset=utf-8;" }
-    );
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "fakultet_hujjatlari_" + new Date().toISOString().slice(0, 10) + ".xls";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    showToast("Excel fayli yuklab olindi!");
+    // AI modalni ochish/yopish
+    const openAiBtn = document.getElementById("open-ai-btn");
+    const closeAiBtn = document.getElementById("close-ai-btn");
+    const aiModal = document.getElementById("ai-modal");
+    if (openAiBtn && aiModal) openAiBtn.addEventListener("click", () => aiModal.classList.remove("hidden"));
+    if (closeAiBtn && aiModal) closeAiBtn.addEventListener("click", () => aiModal.classList.add("hidden"));
 }
 
 document.addEventListener("DOMContentLoaded", async function() {
-    const loginScreen = document.getElementById("login-screen");
-    const appContent = document.getElementById("app-content");
-
-    if (loginScreen) loginScreen.classList.add("hidden");
-    if (appContent) appContent.classList.add("hidden");
-
-    // Interfeys darhol keshdagi ma'lumotlar bilan ochiladi
-    renderDocuments();
-    renderUsers();
-    updateDashboardStats();
-
     bindFormEvents();
     bindInterfaceEvents();
 
     const loaded = await initCloudSync();
-    if (!loaded) {
-        if (loginScreen) loginScreen.classList.remove("hidden");
-        return;
-    }
+    if (!loaded) return;
 
-    const savedSession = localStorage.getItem("faculty_gs_current_user");
-    if (savedSession) {
+    const savedUserSession = localStorage.getItem("faculty_gs_current_user");
+    if (savedUserSession) {
         try {
-            const session = JSON.parse(savedSession);
-            const matchedUser = usersList.find(function(user) {
-                return user.username === String(session.username || "").toLowerCase();
-            });
-
-            if (matchedUser) {
-                currentUser = matchedUser;
-                currentUserOriginalUsername = matchedUser.username;
+            const sessionData = JSON.parse(savedUserSession);
+            const foundUser = usersList.find(u => u.username === sessionData.username);
+            if (foundUser) {
+                currentUser = foundUser;
+                currentUserOriginalUsername = foundUser.username;
                 startAppSession();
-                return;
             }
-
-            localStorage.removeItem("faculty_gs_current_user");
-        } catch (error) {
-            console.error("Sessiyani o'qish xatosi:", error);
-            localStorage.removeItem("faculty_gs_current_user");
+        } catch (e) {
+            console.error("Session parse error:", e);
         }
     }
-
-    if (loginScreen) loginScreen.classList.remove("hidden");
 });

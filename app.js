@@ -1,56 +1,69 @@
+// Sizning Firebase konfiguratsiyangiz
+const firebaseConfig = {
+    apiKey: "AIzaSyBvjW1sZlK_La1iga0opVAoVF9bnWwBtLI",
+    authDomain: "fakultet-hujjatlari.firebaseapp.com",
+    projectId: "fakultet-hujjatlari",
+    storageBucket: "fakultet-hujjatlari.firebasestorage.app",
+    messagingSenderId: "459968500801",
+    appId: "1:459968500801:web:23d71ca4864cc139f4a2c0",
+    measurementId: "G-X9JFVWKDYC"
+};
+
+// Firebase'ni ishga tushirish
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 let currentUser = null;
 let documents = [];
 let usersList = [];
 
-// Sizning Google Sheets bulutli baza havolangiz
-const API_URL = 'https://script.google.com/macros/s/AKfycbzorP29uIWi7hUYdMvoM1y_whto5x9P6suRNwMzYy-TkdAjYnxQWkSOj3if9eA7Ye4/exec';
-
-// BAZADAN MA'LUMOTLARNI YUKLAB OLISH
+// BAZADAN MA'LUMOTLARNI REAL VAQTDA YUKLAB OLISH
 async function loadCloudData() {
-    try {
-        const response = await fetch(API_URL);
-        if (response.ok) {
-            const data = await response.json();
-            if (data && data.documents) documents = data.documents;
-            if (data && data.usersList) usersList = data.usersList;
-        }
-    } catch (e) {
-        console.log("Tarmoqdan o'qishda xatolik, lokal xotiradan foydalanilmoqda");
-    }
+    return new Promise((resolve) => {
+        db.ref('faculty_data').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                documents = data.documents || [];
+                usersList = data.usersList || [];
+            }
 
-    if (!usersList || usersList.length === 0) {
-        usersList = [
-            { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-            { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
-        ];
+            if (!usersList || usersList.length === 0) {
+                usersList = [
+                    { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
+                    { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
+                ];
+                saveCloudDataSilently();
+            }
+
+            renderDocuments();
+            renderUsers();
+            updateDashboardStats();
+            resolve(true);
+        }, (error) => {
+            console.log("Firebase o'qish xatosi:", error);
+            resolve(false);
+        });
+    });
+}
+
+// BAZAGA MA'LUMOTLARNI SAQLASH
+async function saveCloudData() {
+    try {
+        await db.ref('faculty_data').set({
+            documents: documents,
+            usersList: usersList
+        });
+        showToast("Ma'lumotlar Firebase bulutli bazasiga saqlandi!");
+    } catch (e) {
+        showToast("Saqlashda xatolik yuz berdi!", "error");
     }
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH VA DARHOL EKRANNI YANGILASH
-async function saveCloudData() {
-    try {
-        const payload = {
-            documents: documents,
-            usersList: usersList
-        };
-        
-        await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-
-        await loadCloudData();
-        renderDocuments();
-        renderUsers();
-        updateDashboardStats();
-
-        showToast("Ma'lumotlar bulutli bazaga muvaffaqiyatli saqlandi!");
-    } catch (e) {
-        renderDocuments();
-        renderUsers();
-        updateDashboardStats();
-        showToast("Ma'lumotlar saqlandi!");
-    }
+async function saveCloudDataSilently() {
+    await db.ref('faculty_data').set({
+        documents: documents,
+        usersList: usersList
+    });
 }
 
 // TOAST XABARNOMA
@@ -97,9 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 startAppSession();
                 return;
             }
-        } catch (e) {
-            console.log("Session parse xatosi");
-        }
+        } catch (e) {}
     }
     
     localStorage.removeItem('faculty_gs_current_user');
@@ -107,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginScreen) loginScreen.classList.remove('hidden');
 });
 
-// TABLARNI ALMASHTIRISH
+// TABLARni ALMASHTIRISH
 function switchTab(tabId) {
     document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -134,8 +145,6 @@ const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await loadCloudData();
-
         const u = document.getElementById('username').value.trim().toLowerCase();
         const p = document.getElementById('password').value.trim();
         const errorDiv = document.getElementById('login-error');
@@ -528,20 +537,6 @@ if (exportExcelBtn) {
             <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
             <head>
                 <meta charset="UTF-8">
-                <!--[if gte mso 9]>
-                <xml>
-                    <x:ExcelWorkbook>
-                        <x:ExcelWorksheets>
-                            <x:ExcelWorksheet>
-                                <x:Name>Fakultet Hujjatlari</x:Name>
-                                <x:WorksheetOptions>
-                                    <x:DisplayGridlines/>
-                                </x:WorksheetOptions>
-                            </x:ExcelWorksheet>
-                        </x:ExcelWorksheets>
-                    </x:ExcelWorkbook>
-                </xml>
-                <![endif]-->
                 <style>
                     table { border-collapse: collapse; width: 100%; }
                     th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; border: 1px solid #000000; text-align: center; padding: 8px; }
@@ -586,4 +581,38 @@ if (exportExcelBtn) {
         `;
 
         const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fakultet_hujjatlari_${new Date().toISOString().slice(0, 10)}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("Excel fayli yuklab olindi!");
+    });
+}
+
+// PDF MODAL
+function openPdf(id) {
+    const doc = documents.find(d => d.id == id);
+    if (doc) {
+        document.getElementById('pdf-modal-title').textContent = doc.title;
+        document.getElementById('pdf-frame').src = doc.pdfUrl;
+        document.getElementById('pdf-modal').classList.remove('hidden');
+    }
+}
+
+const closePdfBtn = document.getElementById('close-pdf-btn');
+if (closePdfBtn) {
+    closePdfBtn.addEventListener('click', () => document.getElementById('pdf-modal').classList.add('hidden'));
+}
+
+// QIDIRUV VA FILTRLAR
+const searchInput = document.getElementById('search-input');
+const filterYear = document.getElementById('filter-academic-year');
+const filterCategory = document.getElementById('filter-category');
+
+if (searchInput) searchInput.addEventListener('input', renderDocuments);
+if (filterYear) filterYear.addEventListener('change', renderDocuments);
+if (filterCategory) filterCategory.addEventListener('change', renderDocuments);

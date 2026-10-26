@@ -20,7 +20,7 @@ let usersList = [];
 // BAZADAN MA'LUMOTLARNI REAL VAQTDA YUKLAB OLISH
 async function loadCloudData() {
     return new Promise((resolve) => {
-        db.ref('faculty_data').on('value', (snapshot) => {
+        db.ref('faculty_data').once('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 documents = data.documents || [];
@@ -95,8 +95,9 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA
+// SAHIFA YUKLANGANDA (Xatolik to'g'rilangan qism)
 document.addEventListener('DOMContentLoaded', async () => {
+    // Avval bazadan ma'lumotlar to'liq yuklanishini kutamiz
     await loadCloudData();
 
     const savedUser = localStorage.getItem('faculty_gs_current_user');
@@ -118,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginScreen) loginScreen.classList.remove('hidden');
 });
 
-// TABLARni ALMASHTIRISH
+// TABLARNI ALMASHTIRISH
 function switchTab(tabId) {
     document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(btn => {

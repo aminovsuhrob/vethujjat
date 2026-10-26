@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     
-    <!-- SheetJS (Excel yaratish uchun) kutubxonasi -->
+    <!-- SheetJS (Excel yaratish uchun kutubxona) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
@@ -392,37 +392,6 @@
             <iframe id="pdf-frame" class="w-full h-full bg-slate-950 border-0" src=""></iframe>
         </div>
     </div>
-
-    <!-- Excel eksport funksiyasi uchun JS qismi (app.js faylingizga qo'shishingiz kerak bo'lgan kod) -->
-    <script>
-        // Ushbu qismni app.js faylingizga moslab qo'shing:
-        document.getElementById('export-excel-btn').addEventListener('click', function() {
-            // Agar window.allDocuments yoki shunga o'xshash jadval ma'lumotlari massivi mavjud bo'lsa:
-            if (typeof documentsList === 'undefined' || documentsList.length === 0) {
-                // Agar massiv bo'lmasa, jadvalning o'zidan ma'lumotlarni yig'ib olamiz
-                alert("Eksport qilish uchun hujjatlar mavjud emas!");
-                return;
-            }
-
-            // Excelga yoziladigan qulay obyektlar ro'yxatini shakllantirish
-            const excelData = documentsList.map((doc, index) => ({
-                "№": index + 1,
-                "Bo'lim": doc.category === 'student' ? 'Talaba buyruqlari' : doc.category === 'letter' ? 'Xatlar' : doc.category === 'order' ? 'Farmoyishlar' : 'Ichki buyruqlar',
-                "Hujjat raqami": doc.number,
-                "Sana": doc.date,
-                "O'quv yili": doc.academicYear,
-                "Hujjat nomi": doc.title
-            }));
-
-            // SheetJS yordamida Excel fayl yaratish
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Hujjatlar");
-
-            // Faylni yuklab olish
-            XLSX.writeFile(workbook, "Veterinariya_fakulteti_hujjatlari.xlsx");
-        });
-    </script>
 
     <script src="app.js"></script>
 </body>

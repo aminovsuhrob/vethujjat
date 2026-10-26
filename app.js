@@ -18,6 +18,7 @@ const facultyRef = db.ref("faculty_data");
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
+// Tezkorlik uchun darhol keshdan o'qiymiz
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];
 let usersList = JSON.parse(localStorage.getItem('faculty_cache_users')) || [];
@@ -293,6 +294,7 @@ function renderDocuments() {
         );
     });
 
+    // Ko'p hujjatlarda interfeys qotib qolmasligi uchun dastlabki 100 tasi tezkor render qilinadi
     const paginated = filtered.slice(0, 100);
     const isAdmin = currentUser && currentUser.role === "admin";
 
@@ -858,7 +860,11 @@ function bindInterfaceEvents() {
 }
 
 function exportExcel() {
-    // Endi foydalanuvchilarga ham Excel eksport qilishga ruxsat berildi
+    if (!currentUser || currentUser.role !== "admin") {
+        showToast("Excel eksporti faqat administrator uchun!", "error");
+        return;
+    }
+
     if (!documents.length) {
         showToast("Yuklab olish uchun hujjatlar mavjud emas!", "error");
         return;
@@ -940,6 +946,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (loginScreen) loginScreen.classList.add("hidden");
     if (appContent) appContent.classList.add("hidden");
 
+    // Interfeys darhol keshdagi ma'lumotlar bilan ochiladi
     renderDocuments();
     renderUsers();
     updateDashboardStats();

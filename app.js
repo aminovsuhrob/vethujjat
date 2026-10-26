@@ -120,36 +120,6 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// Sahifa ochilishi bilan bir soniyada interfeysni chizish
-document.addEventListener("DOMContentLoaded", function() {
-    renderDocuments();
-    renderUsers();
-    updateDashboardStats();
-
-    const savedUserJson = localStorage.getItem("faculty_gs_current_user");
-    if (savedUserJson) {
-        try {
-            const parsed = JSON.parse(savedUserJson);
-            const found = usersList.find(u => u.username === parsed.username);
-            if (found) {
-                currentUser = found;
-                currentUserOriginalUsername = found.username;
-                startAppSession();
-            }
-        } catch (e) {}
-    }
-
-    if (!currentUser) {
-        localStorage.removeItem("faculty_gs_current_user");
-        const loginScreen = document.getElementById("login-screen");
-        if (loginScreen) loginScreen.classList.remove("hidden");
-    }
-
-    initCloudSync();
-    bindFormEvents();
-    bindGlobalActions();
-});
-
 function initCloudSync() {
     return facultyRef.once("value")
         .then(async function(snapshot) {
@@ -175,6 +145,7 @@ function initCloudSync() {
             renderDocuments();
             renderUsers();
             updateDashboardStats();
+
             return true;
         })
         .catch(function(error) {
@@ -323,7 +294,7 @@ function renderDocuments() {
         );
     });
 
-    // Ko'p hujjatlarda qotib qolmasligi uchun faqat birinchi 100 tasini tezkor chiqaramiz
+    // Ko'p hujjatlarda interfeys qotib qolmasligi uchun dastlabki 100 tasi tezkor render qilinadi
     const paginated = filtered.slice(0, 100);
     const isAdmin = currentUser && currentUser.role === "admin";
 
@@ -559,42 +530,16 @@ function readFileAsDataURL(file) {
     });
 }
 
-function bindGlobalActions() {
-    document.addEventListener("click", function(event) {
-        const btn = event.target.closest("[data-action]");
-        if (!btn) return;
-
-        const action = btn.getAttribute("data-action");
-        const id = btn.getAttribute("data-id");
-        const index = btn.getAttribute("data-index");
-
-        if (action === "open-pdf") openPdf(id);
-        if (action === "edit-doc") editDoc(id);
-        if (action === "delete-doc") deleteDoc(id);
-        if (action === "edit-user") editUser(Number(index));
-        if (action === "delete-user") deleteUser(Number(index));
-    });
-
-    const closePdfBtn = document.getElementById("close-pdf-btn");
-    if (closePdfBtn) closePdfBtn.addEventListener("click", closePdfModal);
-
-    const openAiBtn = document.getElementById("open-ai-btn");
-    const aiModal = document.getElementById("ai-modal");
-    const closeAiBtn = document.getElementById("close-ai-btn");
-
-    if (openAiBtn && aiModal) {
-        openAiBtn.addEventListener("click", () => aiModal.classList.remove("hidden"));
-    }
-    if (closeAiBtn && aiModal) {
-        closeAiBtn.addEventListener("click", () => aiModal.classList.add("hidden"));
-    }
-}
-
 function bindFormEvents() {
     const loginForm = document.getElementById("login-form");
     if (loginForm) {
         loginForm.addEventListener("submit", function(event) {
             event.preventDefault();
+
+            if (!cloudReady) {
+                showToast("Ma'lumotlar yuklanishini kuting!", "error");
+                return;
+            }
 
             const username = document.getElementById("username")?.value.trim().toLowerCase();
             const password = document.getElementById("password")?.value;
@@ -643,7 +588,7 @@ function bindFormEvents() {
     if (profileForm) {
         profileForm.addEventListener("submit", async function(event) {
             event.preventDefault();
-            if (!currentUser) return;
+            if (!currentUser || !cloudReady) return;
 
             try {
                 const photoInput = document.getElementById("my-profile-photo");
@@ -674,6 +619,11 @@ function bindFormEvents() {
                     password: document.getElementById("my-password").value,
                     photo: photo
                 };
+
+                if (!updatedUser.username || !updatedUser.password) {
+                    showToast("Login va parol bo'sh bo'lmasligi kerak!", "error");
+                    return;
+                }
 
                 const duplicate = usersList.some(user => user.username === updatedUser.username && user.username !== oldUsername);
                 if (duplicate) {
@@ -713,6 +663,11 @@ function bindFormEvents() {
             event.preventDefault();
             if (!currentUser || currentUser.role !== "admin") {
                 showToast("Bu amal faqat administrator uchun!", "error");
+                return;
+            }
+
+            if (!cloudReady) {
+                showToast("Ma'lumotlar yuklanishini kuting!", "error");
                 return;
             }
 
@@ -802,64 +757,230 @@ function bindFormEvents() {
                         return;
                     }
                     if (photoFile.size > 1024 * 1024) {
-                        showToast("Rasm 1 MB dan kichik bo'lishi kerak!", "error");
+                        showToast("Rasm hajmi 1 MB dan kichik bo'lishi kerak!", "error");
                         return;
                     }
                     photo = await readFileAsDataURL(photoFile);
                 }
 
-                const newUser = {
+                const userData = normalizeUser({
                     fullname: document.getElementById("new-user-fullname").value.trim(),
                     position: document.getElementById("new-user-position").value.trim(),
                     phone: document.getElementById("new-user-phone").value.trim(),
                     telegram: document.getElementById("new-user-telegram").value.trim(),
                     instagram: document.getElementById("new-user-instagram").value.trim(),
-                    username: document.getElementById("new-user-username").value.trim().toLowerCase(),
+                    username: document.getElementById("new-user-username").value,
                     password: document.getElementById("new-user-password").value,
                     role: document.getElementById("new-user-role").value,
                     photo: photo
-                };
+                });
 
-                if (!newUser.username || !newUser.password) {
-                    showToast("Login va parol bo'sh bo'lmasligi kerak!", "error");
+                if (!userData.username || !userData.password) {
+                    showToast("Login va parolni kiriting!", "error");
                     return;
                 }
 
-                const duplicate = usersList.some((u, idx) => u.username === newUser.username && idx !== editIndex);
+                if (editIndex >= 0 && usersList[editIndex] && usersList[editIndex].username === "admin" && userData.username !== "admin") {
+                    showToast("Asosiy administrator loginini o'zgartirmang!", "error");
+                    return;
+                }
+
+                const duplicate = usersList.some((user, index) => user.username === userData.username && index !== editIndex);
                 if (duplicate) {
-                    showToast("Bu login band!", "error");
+                    showToast("Bu login allaqachon mavjud!", "error");
                     return;
                 }
 
                 if (editIndex >= 0 && usersList[editIndex]) {
-                    usersList[editIndex] = newUser;
-                    showToast("Foydalanuvchi tahrirlandi!");
+                    usersList[editIndex] = userData;
                 } else {
-                    usersList.push(newUser);
-                    showToast("Yangi foydalanuvchi qo'shildi!");
+                    usersList.push(userData);
                 }
 
                 const saved = await saveCloudData();
                 if (!saved) return;
 
                 userForm.reset();
-                const indexField = document.getElementById("edit-user-index");
-                if (indexField) indexField.value = "-1";
+                const editField = document.getElementById("edit-user-index");
+                if (editField) editField.value = "-1";
 
                 renderUsers();
+                updateDashboardStats();
                 switchTab("users-list");
+                showToast(editIndex >= 0 ? "Foydalanuvchi yangilandi!" : "Yangi foydalanuvchi qo'shildi!");
             } catch (error) {
                 console.error(error);
                 showToast("Foydalanuvchini saqlashda xatolik!", "error");
             }
         });
     }
+}
 
+function bindInterfaceEvents() {
     const searchInput = document.getElementById("search-input");
-    const filterYear = document.getElementById("filter-academic-year");
-    const filterCategory = document.getElementById("filter-category");
+    const yearFilter = document.getElementById("filter-academic-year");
+    const categoryFilter = document.getElementById("filter-category");
 
     if (searchInput) searchInput.addEventListener("input", renderDocuments);
-    if (filterYear) filterYear.addEventListener("change", renderDocuments);
-    if (filterCategory) filterCategory.addEventListener("change", renderDocuments);
+    if (yearFilter) yearFilter.addEventListener("change", renderDocuments);
+    if (categoryFilter) categoryFilter.addEventListener("change", renderDocuments);
+
+    const tbody = document.getElementById("documents-table-body");
+    if (tbody) {
+        tbody.addEventListener("click", function(event) {
+            const button = event.target.closest("button[data-action]");
+            if (!button) return;
+
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === "open-pdf") openPdf(id);
+            if (action === "edit-doc") editDoc(id);
+            if (action === "delete-doc") deleteDoc(id);
+        });
+    }
+
+    const usersTable = document.getElementById("users-table-body");
+    if (usersTable) {
+        usersTable.addEventListener("click", function(event) {
+            const button = event.target.closest("button[data-action]");
+            if (!button) return;
+
+            const index = Number(button.dataset.index);
+            if (button.dataset.action === "edit-user") editUser(index);
+            if (button.dataset.action === "delete-user") deleteUser(index);
+        });
+    }
+
+    const closePdfButton = document.getElementById("close-pdf-btn");
+    if (closePdfButton) closePdfButton.addEventListener("click", closePdfModal);
+
+    const exportButton = document.getElementById("export-excel-btn");
+    if (exportButton) exportButton.addEventListener("click", exportExcel);
 }
+
+function exportExcel() {
+    if (!currentUser || currentUser.role !== "admin") {
+        showToast("Excel eksporti faqat administrator uchun!", "error");
+        return;
+    }
+
+    if (!documents.length) {
+        showToast("Yuklab olish uchun hujjatlar mavjud emas!", "error");
+        return;
+    }
+
+    const categoryNames = {
+        student: "Talaba buyruqlari",
+        letter: "Xatlar",
+        order: "Farmoyishlar",
+        internal: "Ichki buyruqlar"
+    };
+
+    const rows = documents.map(function(doc, index) {
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${escapeHTML(categoryNames[doc.category] || doc.category)}</td>
+                <td>${escapeHTML(doc.number)}</td>
+                <td>${escapeHTML(doc.date)}</td>
+                <td>${escapeHTML(doc.academicYear)}</td>
+                <td>${escapeHTML(doc.title)}</td>
+            </tr>
+        `;
+    }).join("");
+
+    const html = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:x="urn:schemas-microsoft-com:office:excel"
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                table { border-collapse: collapse; width: 100%; }
+                th { background: #1e3a8a; color: white; border: 1px solid black; padding: 8px; }
+                td { border: 1px solid #d1d5db; padding: 6px; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>
+                        <th>T/R</th>
+                        <th>Bo'lim</th>
+                        <th>Hujjat raqami</th>
+                        <th>Hujjat sanasi</th>
+                        <th>O'quv yili</th>
+                        <th>Hujjat nomi</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const blob = new Blob(
+        ["\ufeff", html],
+        { type: "application/vnd.ms-excel;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "fakultet_hujjatlari_" + new Date().toISOString().slice(0, 10) + ".xls";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast("Excel fayli yuklab olindi!");
+}
+
+document.addEventListener("DOMContentLoaded", async function() {
+    const loginScreen = document.getElementById("login-screen");
+    const appContent = document.getElementById("app-content");
+
+    if (loginScreen) loginScreen.classList.add("hidden");
+    if (appContent) appContent.classList.add("hidden");
+
+    // Interfeys darhol keshdagi ma'lumotlar bilan ochiladi
+    renderDocuments();
+    renderUsers();
+    updateDashboardStats();
+
+    bindFormEvents();
+    bindInterfaceEvents();
+
+    const loaded = await initCloudSync();
+    if (!loaded) {
+        if (loginScreen) loginScreen.classList.remove("hidden");
+        return;
+    }
+
+    const savedSession = localStorage.getItem("faculty_gs_current_user");
+    if (savedSession) {
+        try {
+            const session = JSON.parse(savedSession);
+            const matchedUser = usersList.find(function(user) {
+                return user.username === String(session.username || "").toLowerCase();
+            });
+
+            if (matchedUser) {
+                currentUser = matchedUser;
+                currentUserOriginalUsername = matchedUser.username;
+                startAppSession();
+                return;
+            }
+
+            localStorage.removeItem("faculty_gs_current_user");
+        } catch (error) {
+            console.error("Sessiyani o'qish xatosi:", error);
+            localStorage.removeItem("faculty_gs_current_user");
+        }
+    }
+
+    if (loginScreen) loginScreen.classList.remove("hidden");
+});

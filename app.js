@@ -18,10 +18,12 @@ const facultyRef = db.ref("faculty_data");
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
+// Tezkorlik uchun darhol keshdan o'qiymiz
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];
 let usersList = JSON.parse(localStorage.getItem('faculty_cache_users')) || [];
 let cloudReady = false;
+let cloudError = false;
 let isSaving = false;
 let saveQueue = Promise.resolve();
 let currentUserOriginalUsername = null;
@@ -57,7 +59,10 @@ if (usersList.length === 0) {
 
 function showToast(message, type = "success") {
     const container = document.getElementById("toast-container");
-    if (!container) return;
+    if (!container) {
+        console.log(message);
+        return;
+    }
 
     const toast = document.createElement("div");
     toast.className = "toast-item px-4 py-3 rounded-xl border text-white text-xs font-medium shadow-lg backdrop-blur flex items-center gap-2 " +
@@ -115,6 +120,7 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
+// Sahifa ochilishi bilan bir soniyada interfeysni chizish
 document.addEventListener("DOMContentLoaded", function() {
     renderDocuments();
     renderUsers();
@@ -145,27 +151,39 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function initCloudSync() {
-    facultyRef.on("value", function(snapshot) {
-        const data = snapshot.val();
-        if (data) {
-            documents = Array.isArray(data.documents) ? data.documents : [];
-            usersList = Array.isArray(data.usersList) ? data.usersList.map(normalizeUser) : DEFAULT_USERS.map(normalizeUser);
-        } else {
-            documents = [];
-            usersList = DEFAULT_USERS.map(normalizeUser);
-            facultyRef.set({ documents: documents, usersList: usersList });
-        }
+    return facultyRef.once("value")
+        .then(async function(snapshot) {
+            const data = snapshot.val();
+            if (data) {
+                documents = Array.isArray(data.documents) ? data.documents : [];
+                usersList = Array.isArray(data.usersList) ? data.usersList.map(normalizeUser) : DEFAULT_USERS.map(normalizeUser);
+            } else {
+                documents = [];
+                usersList = DEFAULT_USERS.map(normalizeUser);
+                await facultyRef.set({
+                    documents: documents,
+                    usersList: usersList
+                });
+            }
 
-        localStorage.setItem('faculty_cache_docs', JSON.stringify(documents));
-        localStorage.setItem('faculty_cache_users', JSON.stringify(usersList));
+            localStorage.setItem('faculty_cache_docs', JSON.stringify(documents));
+            localStorage.setItem('faculty_cache_users', JSON.stringify(usersList));
 
-        cloudReady = true;
-        renderDocuments();
-        renderUsers();
-        updateDashboardStats();
-    }, function(error) {
-        console.error("Firebase xatosi:", error);
-    });
+            cloudReady = true;
+            cloudError = false;
+
+            renderDocuments();
+            renderUsers();
+            updateDashboardStats();
+            return true;
+        })
+        .catch(function(error) {
+            cloudReady = false;
+            cloudError = true;
+            console.error("Firebase yuklash xatosi:", error);
+            showToast("Firebase bilan bog'lanishda xatolik yuz berdi!", "error");
+            return false;
+        });
 }
 
 async function saveCloudData() {
@@ -295,7 +313,6 @@ function renderDocuments() {
         internal: "Ichki buyruqlar"
     };
 
-    // Ko'p ma'lumotlarda qotib qolmasligi uchun 100 tadan oshigini qidiruv orqali chiqarish optimallashtirildi
     const filtered = documents.filter(function(doc) {
         const title = String(doc.title || "").toLowerCase();
         const number = String(doc.number || "").toLowerCase();
@@ -306,8 +323,8 @@ function renderDocuments() {
         );
     });
 
-    const paginated = filtered.slice(0, 100); 
-
+    // Ko'p hujjatlarda qotib qolmasligi uchun faqat birinchi 100 tasini tezkor chiqaramiz
+    const paginated = filtered.slice(0, 100);
     const isAdmin = currentUser && currentUser.role === "admin";
 
     tbody.innerHTML = paginated.map(function(doc) {

@@ -24,9 +24,6 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
 
@@ -171,7 +168,6 @@
                             </select>
                         </div>
 
-                        <!-- EXCEL TUGMASI (Endi ham admin, ham foydalanuvchilar uchun ochiq) -->
                         <button id="export-excel-btn" class="w-full lg:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10">
                             <i class="fa-solid fa-file-excel"></i> Excelga yuklab olish
                         </button>
@@ -199,7 +195,7 @@
                     </div>
                 </section>
 
-                <!-- 2. YANGI HUJJAT QO'SHISH / TAHRIRLASH SECTION -->
+                <!-- 2. YANGI HUJJAT QO'SHISH SECTION -->
                 <section id="section-add-doc" class="tab-section hidden max-w-2xl mx-auto">
                     <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
                         <h2 id="doc-form-title" class="text-sm font-bold text-white mb-6 flex items-center gap-2">
@@ -247,8 +243,8 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">PDF fayl (Maksimal 300 KB)</label>
-                                <input type="file" id="doc-pdf-file" accept="application/pdf" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                                <label class="block text-xs font-medium text-slate-300 mb-1">PDF fayl havolasi yoki nomi</label>
+                                <input type="text" id="doc-pdf-url" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Fayl nomi yoki havolasini yozing">
                             </div>
 
                             <div class="flex items-center gap-3 pt-2">
@@ -259,7 +255,7 @@
                     </div>
                 </section>
 
-                <!-- 3. XODIMLAR / FOYDALANUVCHILAR RO'YXATI -->
+                <!-- 3. XODIMLAR RO'YXATI SECTION -->
                 <section id="section-users-list" class="tab-section hidden space-y-6">
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                         <div class="p-4 border-b border-slate-800 font-bold text-xs text-white flex items-center justify-between">
@@ -286,7 +282,7 @@
                     </div>
                 </section>
 
-                <!-- 4. YANGI XODIM QO'SHISH / TAHRIRLASH SECTION -->
+                <!-- 4. XODIM QO'SHISH SECTION -->
                 <section id="section-add-user" class="tab-section hidden max-w-xl mx-auto">
                     <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
                         <h2 class="text-sm font-bold text-white mb-6 flex items-center gap-2">
@@ -334,11 +330,6 @@
                                         <option value="admin">Admin (Administrator)</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Profil rasmi</label>
-                                <input type="file" id="new-user-photo" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer">
                             </div>
 
                             <div class="flex items-center gap-3 pt-2">
@@ -398,11 +389,6 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Yangi profil rasmi</label>
-                                <input type="file" id="my-profile-photo" accept="image/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
-                            </div>
-
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/20">O'zgarishlarni saqlash</button>
                         </form>
                     </div>
@@ -412,22 +398,324 @@
         </div>
     </div>
 
-    <!-- PDF KO'RISH MODALI -->
-    <div id="pdf-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
-            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-                <h3 id="pdf-modal-title" class="text-xs font-bold text-white truncate max-w-xl">Hujjat</h3>
-                <button id="close-pdf-btn" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 flex items-center justify-center transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="flex-1 bg-slate-950 p-2">
-                <iframe id="pdf-frame" src="about:blank" class="w-full h-full rounded-xl border border-slate-800"></iframe>
-            </div>
-        </div>
-    </div>
+    <!-- JAVASCRIPT LOGIKASI -->
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('vet_current_user')) || null;
 
-    <!-- JavaScript Logikasi (app.js) -->
-    <script src="app.js"></script>
+        function initStorage() {
+            if (!localStorage.getItem('vet_users')) {
+                const defaultUsers = [
+                    {
+                        fullname: "Fakultet Admini",
+                        position: "Dekan / Administrator",
+                        username: "admin",
+                        password: "admin123",
+                        phone: "+998 90 123-45-67",
+                        telegram: "@admin_vet",
+                        instagram: "@admin_vet",
+                        role: "admin",
+                        photo: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                    }
+                ];
+                localStorage.setItem('vet_users', JSON.stringify(defaultUsers));
+            }
+
+            if (!localStorage.getItem('vet_documents')) {
+                localStorage.setItem('vet_documents', JSON.stringify([]));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initStorage();
+
+            if (currentUser) {
+                showApp();
+            } else {
+                showLogin();
+            }
+
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const u = document.getElementById('username').value.trim();
+                const p = document.getElementById('password').value.trim();
+                const err = document.getElementById('login-error');
+
+                const users = JSON.parse(localStorage.getItem('vet_users')) || [];
+                const found = users.find(x => x.username === u && x.password === p);
+
+                if (found) {
+                    currentUser = found;
+                    localStorage.setItem('vet_current_user', JSON.stringify(currentUser));
+                    err.classList.add('hidden');
+                    showApp();
+                    showToast("Tizimga muvaffaqiyatli kirildi!", "success");
+                } else {
+                    err.classList.remove('hidden');
+                    showToast("Login yoki parol xato!", "error");
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('vet_current_user');
+                currentUser = null;
+                showLogin();
+                showToast("Tizimdan chiqildi.", "info");
+            });
+
+            // Hujjat qo'shish formasi
+            document.getElementById('add-document-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const docs = JSON.parse(localStorage.getItem('vet_documents')) || [];
+                const editId = document.getElementById('edit-doc-id').value;
+
+                const newDoc = {
+                    category: document.getElementById('doc-category').value,
+                    academicYear: document.getElementById('doc-academic-year').value,
+                    number: document.getElementById('doc-number').value,
+                    date: document.getElementById('doc-date').value,
+                    title: document.getElementById('doc-title').value,
+                    fileUrl: document.getElementById('doc-pdf-url').value || '#'
+                };
+
+                if (editId !== "") {
+                    docs[editId] = newDoc;
+                    showToast("Hujjat muvaffaqiyatli tahrirlandi!", "success");
+                    document.getElementById('edit-doc-id').value = "";
+                } else {
+                    docs.unshift(newDoc);
+                    showToast("Yangi hujjat qo'shildi!", "success");
+                }
+
+                localStorage.setItem('vet_documents', JSON.stringify(docs));
+                document.getElementById('add-document-form').reset();
+                switchTab('docs-list');
+                loadDocuments();
+            });
+
+            // Qidiruv va filterlar
+            document.getElementById('search-input').addEventListener('input', loadDocuments);
+            document.getElementById('filter-academic-year').addEventListener('change', loadDocuments);
+            document.getElementById('filter-category').addEventListener('change', loadDocuments);
+
+            // Excelga export qilish
+            document.getElementById('export-excel-btn').addEventListener('click', () => {
+                const docs = JSON.parse(localStorage.getItem('vet_documents')) || [];
+                let csv = "Bo'lim,Raqam,Sana,O'quv yili,Hujjat nomi\n";
+                docs.forEach(d => {
+                    csv += `"${d.category}","${d.number}","${d.date}","${d.academicYear}","${d.title}"\n`;
+                });
+                const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "hujjatlar_bazasi.csv";
+                a.click();
+                showToast("Excel (CSV) fayl yuklab olindi!", "success");
+            });
+
+            // Profilni o'zgartirish
+            document.getElementById('my-profile-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                currentUser.fullname = document.getElementById('my-fullname').value;
+                currentUser.position = document.getElementById('my-position').value;
+                currentUser.phone = document.getElementById('my-phone').value;
+                currentUser.telegram = document.getElementById('my-telegram').value;
+                currentUser.instagram = document.getElementById('my-instagram').value;
+                currentUser.username = document.getElementById('my-username').value;
+                currentUser.password = document.getElementById('my-password').value;
+
+                let users = JSON.parse(localStorage.getItem('vet_users')) || [];
+                users = users.map(u => u.username === currentUser.username || u.role === currentUser.role ? currentUser : u);
+                
+                localStorage.setItem('vet_users', JSON.stringify(users));
+                localStorage.setItem('vet_current_user', JSON.stringify(currentUser));
+                
+                document.getElementById('user-display-name').textContent = currentUser.fullname;
+                showToast("Profil ma'lumotlari yangilandi!", "success");
+            });
+        });
+
+        function showLogin() {
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-content').classList.add('hidden');
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+
+            document.getElementById('user-display-name').textContent = currentUser.fullname;
+            document.getElementById('user-role-badge').textContent = currentUser.role.toUpperCase();
+            if (currentUser.photo) {
+                document.getElementById('header-user-avatar').src = currentUser.photo;
+            }
+
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(el => {
+                if (currentUser.role === 'admin') {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            loadDocuments();
+            loadUsersList();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/10');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-800');
+            });
+
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/10');
+            }
+
+            if (tabId === 'my-profile') loadMyProfileData();
+            if (tabId === 'users-list') loadUsersList();
+        }
+
+        function loadDocuments() {
+            const tbody = document.getElementById('documents-table-body');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const yearVal = document.getElementById('filter-academic-year').value;
+            const catVal = document.getElementById('filter-category').value;
+
+            let docs = JSON.parse(localStorage.getItem('vet_documents')) || [];
+            const users = JSON.parse(localStorage.getItem('vet_users')) || [];
+
+            // Statistikani hisoblash
+            document.getElementById('stat-total-docs').textContent = docs.length;
+            document.getElementById('stat-student-docs').textContent = docs.filter(d => d.category === 'student').length;
+            document.getElementById('stat-letters').textContent = docs.filter(d => d.category === 'letter').length;
+            document.getElementById('stat-users').textContent = users.length;
+
+            // Filtrdan o'tkazish
+            docs = docs.filter(d => {
+                const matchSearch = d.title.toLowerCase().includes(searchVal) || d.number.toLowerCase().includes(searchVal);
+                const matchYear = yearVal === 'all' || d.academicYear === yearVal;
+                const matchCat = catVal === 'all' || d.category === catVal;
+                return matchSearch && matchYear && matchCat;
+            });
+
+            tbody.innerHTML = '';
+            if (docs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">Hozircha mos keluvchi hujjatlar mavjud emas.</td></tr>`;
+                return;
+            }
+
+            docs.forEach((doc, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="p-4 uppercase font-medium text-blue-400">${doc.category}</td>
+                    <td class="p-4 text-white">№ ${doc.number} <br><span class="text-[10px] text-slate-400">${doc.date}</span></td>
+                    <td class="p-4 text-slate-300">${doc.academicYear}</td>
+                    <td class="p-4 text-slate-200">${doc.title}</td>
+                    <td class="p-4 text-center">
+                        ${doc.fileUrl && doc.fileUrl !== '#' ? `<a href="${doc.fileUrl}" target="_blank" class="text-blue-400 hover:text-blue-300"><i class="fa-solid fa-file-pdf text-lg"></i></a>` : '<span class="text-slate-600">-</span>'}
+                    </td>
+                    <td class="p-4 text-right">
+                        ${currentUser.role === 'admin' ? `
+                            <button onclick="editDoc(${index})" class="text-blue-400 hover:text-blue-300 mr-2"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteDoc(${index})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteDoc(index) {
+            if (confirm("Hujjatni o'chirishni xohlaysizmi?")) {
+                let docs = JSON.parse(localStorage.getItem('vet_documents')) || [];
+                docs.splice(index, 1);
+                localStorage.setItem('vet_documents', JSON.stringify(docs));
+                loadDocuments();
+                showToast("Hujjat o'chirildi!", "info");
+            }
+        }
+
+        function editDoc(index) {
+            let docs = JSON.parse(localStorage.getItem('vet_documents')) || [];
+            let doc = docs[index];
+
+            document.getElementById('edit-doc-id').value = index;
+            document.getElementById('doc-category').value = doc.category;
+            document.getElementById('doc-academic-year').value = doc.academicYear;
+            document.getElementById('doc-number').value = doc.number;
+            document.getElementById('doc-date').value = doc.date;
+            document.getElementById('doc-title').value = doc.title;
+            document.getElementById('doc-pdf-url').value = doc.fileUrl;
+
+            switchTab('add-doc');
+        }
+
+        function cancelDocEdit() {
+            document.getElementById('add-document-form').reset();
+            document.getElementById('edit-doc-id').value = "";
+            switchTab('docs-list');
+        }
+
+        function loadUsersList() {
+            const tbody = document.getElementById('users-table-body');
+            const users = JSON.parse(localStorage.getItem('vet_users')) || [];
+            
+            tbody.innerHTML = '';
+            users.forEach((user) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/40 transition";
+                tr.innerHTML = `
+                    <td class="p-3"><img src="${user.photo || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" class="w-8 h-8 rounded-lg object-cover"></td>
+                    <td class="p-3 font-medium text-white">${user.fullname}</td>
+                    <td class="p-3 text-slate-400">${user.position}</td>
+                    <td class="p-3 text-slate-300">${user.username}</td>
+                    <td class="p-3 text-slate-400">${user.phone || '-'}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${user.role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}">${user.role.toUpperCase()}</span></td>
+                    <td class="p-3 text-right"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function loadMyProfileData() {
+            if (!currentUser) return;
+            document.getElementById('my-fullname').value = currentUser.fullname || '';
+            document.getElementById('my-position').value = currentUser.position || '';
+            document.getElementById('my-phone').value = currentUser.phone || '';
+            document.getElementById('my-telegram').value = currentUser.telegram || '';
+            document.getElementById('my-instagram').value = currentUser.instagram || '';
+            document.getElementById('my-username').value = currentUser.username || '';
+            document.getElementById('my-password').value = currentUser.password || '';
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            let bgColors = "bg-slate-900 border-slate-700 text-white";
+            if (type === 'success') bgColors = "bg-emerald-950 border-emerald-800 text-emerald-200";
+            if (type === 'error') bgColors = "bg-rose-950 border-rose-800 text-rose-200";
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-3 transition-all duration-300 translate-y-2 opacity-0 ${bgColors}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>

@@ -858,6 +858,7 @@ function bindInterfaceEvents() {
 }
 
 function exportExcel() {
+    // Endi foydalanuvchilarga ham Excel eksport qilishga ruxsat berildi
     if (!documents.length) {
         showToast("Yuklab olish uchun hujjatlar mavjud emas!", "error");
         return;

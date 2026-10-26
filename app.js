@@ -18,7 +18,6 @@ const facultyRef = db.ref("faculty_data");
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
-// Keshdan darhol o'qish (Tezkorlik uchun)
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];
 let usersList = JSON.parse(localStorage.getItem('faculty_cache_users')) || [];
@@ -116,13 +115,11 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// Sahifa ochilishi bilan keshdan darhol interfeysni chizish
 document.addEventListener("DOMContentLoaded", function() {
     renderDocuments();
     renderUsers();
     updateDashboardStats();
 
-    // Sessiyani tekshirish
     const savedUserJson = localStorage.getItem("faculty_gs_current_user");
     if (savedUserJson) {
         try {
@@ -142,7 +139,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (loginScreen) loginScreen.classList.remove("hidden");
     }
 
-    // Orqa fonda Firebase sinxronizatsiyasi
     initCloudSync();
     bindFormEvents();
     bindGlobalActions();
@@ -160,7 +156,6 @@ function initCloudSync() {
             facultyRef.set({ documents: documents, usersList: usersList });
         }
 
-        // Keshlash
         localStorage.setItem('faculty_cache_docs', JSON.stringify(documents));
         localStorage.setItem('faculty_cache_users', JSON.stringify(usersList));
 
@@ -300,6 +295,7 @@ function renderDocuments() {
         internal: "Ichki buyruqlar"
     };
 
+    // Ko'p ma'lumotlarda qotib qolmasligi uchun 100 tadan oshigini qidiruv orqali chiqarish optimallashtirildi
     const filtered = documents.filter(function(doc) {
         const title = String(doc.title || "").toLowerCase();
         const number = String(doc.number || "").toLowerCase();
@@ -310,9 +306,11 @@ function renderDocuments() {
         );
     });
 
+    const paginated = filtered.slice(0, 100); 
+
     const isAdmin = currentUser && currentUser.role === "admin";
 
-    tbody.innerHTML = filtered.map(function(doc) {
+    tbody.innerHTML = paginated.map(function(doc) {
         return `
             <tr class="hover:bg-slate-800/50 border-b border-slate-800">
                 <td class="p-4">
@@ -714,8 +712,8 @@ function bindFormEvents() {
                         showToast("Faqat PDF fayl tanlang!", "error");
                         return;
                     }
-                    if (file.size > 800 * 1024) {
-                        showToast("PDF fayl hajmi 800 KB dan oshmasligi kerak!", "error");
+                    if (file.size > 300 * 1024) {
+                        showToast("Tez ishlashi uchun PDF fayl hajmi 300 KB dan kichik bo'lishi kerak!", "error");
                         return;
                     }
                     pdfUrl = await readFileAsDataURL(file);

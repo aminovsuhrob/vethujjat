@@ -16,7 +16,7 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 const facultyRef = db.ref("faculty_data");
 
-const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+const DEFAULT_AVATAR = "https://t.me/s/veterinariyaprofilaktikasi?before=13503";
 
 let currentUser = null;
 let documents = JSON.parse(localStorage.getItem('faculty_cache_docs')) || [];

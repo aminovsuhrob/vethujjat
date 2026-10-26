@@ -823,7 +823,6 @@ function bindInterfaceEvents() {
     if (yearFilter) yearFilter.addEventListener("change", renderDocuments);
     if (categoryFilter) categoryFilter.addEventListener("change", renderDocuments);
 
-    // Hujjatlar jadvalidagi tugmalar uchun bosish hodisalari
     const tbody = document.getElementById("documents-table-body");
     if (tbody) {
         tbody.addEventListener("click", function(event) {
@@ -839,7 +838,6 @@ function bindInterfaceEvents() {
         });
     }
 
-    // Foydalanuvchilar jadvalidagi tugmalar uchun bosish hodisalari
     const usersTbody = document.getElementById("users-table-body");
     if (usersTbody) {
         usersTbody.addEventListener("click", function(event) {
@@ -854,7 +852,7 @@ function bindInterfaceEvents() {
         });
     }
 
-    // Excelga yuklab olish tugmasi hodisasi
+    // EXCELGA YUKLAB OLISH (Barcha foydalanuvchilar uchun hech qanday rol cheklovisiz ishlaydi)
     const exportExcelBtn = document.getElementById("export-excel-btn");
     if (exportExcelBtn) {
         exportExcelBtn.addEventListener("click", function() {
@@ -888,7 +886,6 @@ function bindInterfaceEvents() {
         });
     }
 
-    // PDF modalni yopish
     const closePdfBtn = document.getElementById("close-pdf-btn");
     const pdfModal = document.getElementById("pdf-modal");
     if (closePdfBtn) closePdfBtn.addEventListener("click", closePdfModal);
@@ -898,7 +895,6 @@ function bindInterfaceEvents() {
         });
     }
 
-    // AI modalni ochish/yopish
     const openAiBtn = document.getElementById("open-ai-btn");
     const closeAiBtn = document.getElementById("close-ai-btn");
     const aiModal = document.getElementById("ai-modal");

@@ -15,22 +15,21 @@ const db = firebase.database();
 
 let currentUser = null;
 let documents = [];
-let usersList = [];
+let usersList = [
+    { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
+    { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
+];
 
-// BAZADAN MA'LUMOTLARNI REAL VAQTDA YUKLAB OLISH
+// REAL VAQTDA MA'LUMOT OLISH VA TEZKOR INTERFEYS
 function initCloudSync() {
     db.ref('faculty_data').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
             documents = data.documents || [];
-            usersList = data.usersList || [];
-        }
-
-        if (!usersList || usersList.length === 0) {
-            usersList = [
-                { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-                { fullname: 'Foydalanuvchi', position: 'Inspektor', username: 'user', password: '123', role: 'user', phone: '+998 91 987 65 43', telegram: '@user_fakultet', instagram: '', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }
-            ];
+            if (data.usersList && data.usersList.length > 0) {
+                usersList = data.usersList;
+            }
+        } else {
             saveCloudDataSilently();
         }
 
@@ -38,18 +37,18 @@ function initCloudSync() {
         renderUsers();
         updateDashboardStats();
     }, (error) => {
-        console.log("Firebase o'qish xatosi:", error);
+        console.log("Firebase xatosi:", error);
     });
 }
 
-// BAZAGA MA'LUMOTLARNI SAQLASH
+// BAZAGA SAQLASH
 async function saveCloudData() {
     try {
         await db.ref('faculty_data').set({
             documents: documents,
             usersList: usersList
         });
-        showToast("Ma'lumotlar Firebase bulutli bazasiga saqlandi!");
+        showToast("Ma'lumotlar Firebase bazasiga saqlandi!");
     } catch (e) {
         showToast("Saqlashda xatolik yuz berdi!", "error");
     }
@@ -91,9 +90,8 @@ function updateDashboardStats() {
     if (users) users.textContent = usersList.length;
 }
 
-// SAHIFA YUKLANGANDA (100% BARQAROR SESSIYA TEKSHiriruvi)
+// SAHIFA YUKLANGANDA 100% BARQAROR TEKSHIRUV
 document.addEventListener('DOMContentLoaded', () => {
-    // Real vaqt rejimidagi sinxronizatsiyani ishga tushiramiz
     initCloudSync();
 
     const savedUserJson = localStorage.getItem('faculty_gs_current_user');
@@ -102,14 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             currentUser = JSON.parse(savedUserJson);
             if (currentUser && currentUser.username) {
-                // Darhol sessiyani ochamiz, login oynasini ko'rsatmaymiz
                 startAppSession();
                 return;
             }
         } catch (e) {}
     }
     
-    // Agar foydalanuvchi ma'lumotlari umuman bo'lmasa login chiqadi
+    localStorage.removeItem('faculty_gs_current_user');
     const loginScreen = document.getElementById('login-screen');
     if (loginScreen) loginScreen.classList.remove('hidden');
 });
@@ -145,10 +142,9 @@ if (loginForm) {
         const p = document.getElementById('password').value.trim();
         const errorDiv = document.getElementById('login-error');
         
-        // Agar usersList hali bo'sh bo'lsa (baza sekinroq kelayotgan bo'lsa), default adminni tekshiramiz
         let user = usersList.find(x => x.username.toLowerCase() === u && x.password === p);
         if (!user && u === 'admin' && p === '123') {
-            user = { fullname: 'Bosh Admin', position: 'Dekan o`rinbosari', username: 'admin', password: '123', role: 'admin', phone: '+998 90 123 45 67', telegram: '@admin_fakultet', instagram: '@samdvmchbu', photo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' };
+            user = usersList[0];
         }
         
         if (!user) {
@@ -161,7 +157,6 @@ if (loginForm) {
         currentUser = user;
         currentUser.originalUsername = user.username;
 
-        // To'liq obyektni localStorage'da saqlaymiz
         localStorage.setItem('faculty_gs_current_user', JSON.stringify(currentUser));
 
         startAppSession();
@@ -272,6 +267,7 @@ if (myProfileForm) {
         updateHeaderUserUI();
         renderUsers();
         updateDashboardStats();
+        showToast("Profil ma'lumotlari yangilandi!");
     });
 }
 

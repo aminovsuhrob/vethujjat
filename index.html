@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veterinariya profilaktikasi va davolash fakulteti - Elektron Hujjatlar Portali</title>
+    <title>Veterinariya profilaktikasi va davolash fakulteti - Smart Portal</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -33,42 +33,38 @@
     <!-- Toast Xabarnomalar konteyneri -->
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- 1. LOGIN EKRANI -->
-    <div id="login-screen" class="fixed inset-0 z-40 bg-slate-950 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- 1. LOGIN EKRANI (Rasmga moslab dizayn qilindi) -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden text-center">
             
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-400 text-2xl shadow-inner">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight text-white">Elektron Hujjatlar Portali</h1>
-                <p class="text-xs text-slate-400 mt-1">Veterinariya profilaktikasi va davolash fakulteti</p>
+            <!-- Fakultet Logotipi -->
+            <div class="w-20 h-20 bg-white rounded-full p-1 border-2 border-blue-500/50 shadow-xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFrXs6KvH1wdXCC0AERLtlrcSpk1zpdL6WialHi6hIGg&s" alt="Logo" class="w-full h-full object-contain rounded-full">
             </div>
 
-            <form id="login-form" class="space-y-4">
+            <!-- Sarlavhalar -->
+            <h1 class="text-sm font-bold tracking-wider text-white uppercase leading-snug">
+                VETERINARIYA PROFILAKTIkASI VA<br>DAVOLASH FAKULTETI
+            </h1>
+            <p class="text-[11px] text-blue-400 mt-1 font-medium mb-6">Fakultet Hujjatlar Portali</p>
+
+            <form id="login-form" class="space-y-4 text-left">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Foydalanuvchi nomi (Login)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-user text-xs"></i></span>
-                        <input type="text" id="username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Loginni kiriting">
-                    </div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 ml-1">Login</label>
+                    <input type="text" id="username" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Loginni kiriting">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Parol</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
-                        <input type="password" id="password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 pl-10 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Parolni kiriting">
-                    </div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 ml-1">Parol</label>
+                    <input type="password" id="password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500 transition" placeholder="Parolni kiriting">
                 </div>
 
-                <div id="login-error" class="hidden text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-center">
+                <div id="login-error" class="hidden text-rose-400 text-xs bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-center font-medium">
                     Login yoki parol xato!
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white text-xs font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-right-to-bracket"></i> Tizimga kirish
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 mt-2">
+                    Tizimga kirish <i class="fa-solid fa-right-to-bracket"></i>
                 </button>
             </form>
         </div>
@@ -77,13 +73,13 @@
     <!-- 2. ASOSIY ILOVA TIZIMI -->
     <div id="app-content" class="hidden flex-1 flex flex-col">
         <!-- HEADER -->
-        <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
+        <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-blue-600/10 border border-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 shadow-inner">
-                    <i class="fa-solid fa-shield-halved text-sm"></i>
+                <div class="w-10 h-10 bg-white rounded-full p-0.5 border border-blue-500/50 flex items-center justify-center overflow-hidden shadow">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFrXs6KvH1wdXCC0AERLtlrcSpk1zpdL6WialHi6hIGg&s" alt="Logo" class="w-full h-full object-contain rounded-full">
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-white tracking-wide block">VetProfilaktika Hujjatlari</span>
+                    <span class="text-xs font-bold text-white tracking-wide block uppercase">VetProfilaktika Hujjatlari</span>
                     <span class="text-[10px] text-slate-400">Bulutli Baza Tizimi</span>
                 </div>
             </div>
@@ -154,12 +150,15 @@
                         <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1">
                             <input type="text" id="search-input" placeholder="Hujjat nomi yoki raqami bo'yicha qidirish..." class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-full lg:w-80">
                             
+                            <!-- 2024-2030 O'quv yillari oralig'i -->
                             <select id="filter-academic-year" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                                 <option value="all">Barcha o'quv yillari</option>
-                                <option value="2023-2024">2023-2024</option>
-                                <option value="2024-2025">2024-2025</option>
-                                <option value="2025-2026">2025-2026</option>
+                                <option value="2029-2030">2029-2030</option>
+                                <option value="2028-2029">2028-2029</option>
+                                <option value="2027-2028">2027-2028</option>
                                 <option value="2026-2027">2026-2027</option>
+                                <option value="2025-2026">2025-2026</option>
+                                <option value="2024-2025">2024-2025</option>
                             </select>
 
                             <select id="filter-category" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
@@ -171,7 +170,7 @@
                             </select>
                         </div>
 
-                        <!-- EXCEL TUGMASI (Endi ham admin, ham foydalanuvchilar uchun ochiq) -->
+                        <!-- EXCEL TUGMASI (Hamma uchun ochiq) -->
                         <button id="export-excel-btn" class="w-full lg:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10">
                             <i class="fa-solid fa-file-excel"></i> Excelga yuklab olish
                         </button>
@@ -222,10 +221,12 @@
                                 <div>
                                     <label class="block text-xs font-medium text-slate-300 mb-1">O'quv yili</label>
                                     <select id="doc-academic-year" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
-                                        <option value="2023-2024">2023-2024</option>
-                                        <option value="2024-2025">2024-2025</option>
-                                        <option value="2025-2026" selected>2025-2026</option>
+                                        <option value="2029-2030">2029-2030</option>
+                                        <option value="2028-2029">2028-2029</option>
+                                        <option value="2027-2028">2027-2028</option>
                                         <option value="2026-2027">2026-2027</option>
+                                        <option value="2025-2026" selected>2025-2026</option>
+                                        <option value="2024-2025">2024-2025</option>
                                     </select>
                                 </div>
                             </div>
